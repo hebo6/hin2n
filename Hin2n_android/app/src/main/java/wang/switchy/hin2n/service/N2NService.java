@@ -77,8 +77,7 @@ public class N2NService extends VpnService {
         if (!mN2nSettingInfo.getGatewayIp().isEmpty()) {
             /* Route all the internet traffic via n2n. Most specific routes "win" over the system default gateway.
              * See https://github.com/zerotier/ZeroTierOne/issues/178#issuecomment-204599227 */
-            builder.addRoute("0.0.0.0", 1);
-            builder.addRoute("128.0.0.0", 1);
+             builder.addRoute("192.168.6.0", 24);
         }
 
         if (!mN2nSettingInfo.getDnsServer().isEmpty()) {
