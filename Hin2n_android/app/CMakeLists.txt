@@ -105,6 +105,9 @@ add_library(edge_v3 SHARED
         )
 target_compile_definitions(edge_v3 PUBLIC N2N_HAVE_AES HAVE_OPENSSL_1_1)
 target_compile_options(edge_v3 PRIVATE -DN2N_V3)
+target_compile_options(edge_v3 PRIVATE 
+     $<$<COMPILE_LANGUAGE:C>:-Wno-implicit-function-declaration>
+)
 target_include_directories(edge_v3 PUBLIC
         src/main/cpp/n2n_v3/include
         ${OPENSSL_INCLUDE_DIR}

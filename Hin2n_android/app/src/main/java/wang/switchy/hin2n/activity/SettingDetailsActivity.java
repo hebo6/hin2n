@@ -97,6 +97,8 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
     private RadioButton mVersionV2s;
     private RadioButton mVersionV3;
     private TextInputLayout mGatewayIp;
+    private TextInputLayout mSubnetIp;
+    private TextInputLayout mSubnetMask;
     private TextInputLayout mDnsServer;
     private LinearLayout mEncryptionBox;
     private Spinner mEncryptionMode;
@@ -213,6 +215,8 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
         mAcceptMuticastCheckBox = (CheckBox) findViewById(R.id.accept_muticast_check_box);
         mUseHttpTunnelCheckBox = (CheckBox) findViewById(R.id.use_http_tunnel_check_box);
         mGatewayIp = (TextInputLayout) findViewById(R.id.til_gateway_ip);
+        mSubnetIp = (TextInputLayout) findViewById(R.id.til_subnet_ip);
+        mSubnetMask = (TextInputLayout) findViewById(R.id.til_subnet_mask);
         mDnsServer = (TextInputLayout) findViewById(R.id.til_dns_server_ip);
         mEncryptionBox = (LinearLayout) findViewById(R.id.ll_n2n_encryption);
         mEncryptionMode = (Spinner) findViewById(R.id.til_encryption_mode);
@@ -281,6 +285,8 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
             mTraceLevelSpinner.setSelection(Integer.valueOf(getString(R.string.item_default_tracelevel)) - 1);
             mMoreSettingCheckBox.setChecked(false);
             mGatewayIp.getEditText().setText(R.string.item_default_gateway_ip);
+//            mSubnetIp.getEditText().setText(R.string.item_default_subnet_ip);
+//            mSubnetMask.getEditText().setText(R.string.item_default_subnet_mask);
             mDnsServer.getEditText().setText("");
             mEncryptionMode.setSelection(encAdapter.getPosition("Twofish"));
             mHeaderEncCheckBox.setChecked(Boolean.valueOf(getString(R.string.item_default_headerenc)));
@@ -318,6 +324,8 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
             mDevDescTIL.getEditText().setText(mN2NSettingModel.getDevDesc());
             mSuperNodeTIL.getEditText().setText(mN2NSettingModel.getSuperNode());
             mGatewayIp.getEditText().setText(mN2NSettingModel.getGatewayIp());
+            mSubnetIp.getEditText().setText(mN2NSettingModel.getSubnetIp());
+            mSubnetMask.getEditText().setText(mN2NSettingModel.getSubnetMask());
             mDnsServer.getEditText().setText(mN2NSettingModel.getDnsServer());
             mEncryptionMode.setSelection(encAdapter.getPosition(mN2NSettingModel.getEncryptionMode()));
 
@@ -382,6 +390,8 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
                 mLocalIP.setVisibility(View.GONE);
                 mLocalIpCheckBox.setVisibility(View.GONE);
                 mGatewayIp.setVisibility(View.GONE);
+                mSubnetIp.setVisibility(View.GONE);
+                mSubnetMask.setVisibility(View.GONE);
                 mDnsServer.setVisibility(View.GONE);
                 mResolveSnLayout.setVisibility(View.VISIBLE);
                 mEncryptionBox.setVisibility(View.GONE);
@@ -401,6 +411,8 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
                 mLocalIP.setVisibility(View.GONE);
                 mLocalIpCheckBox.setVisibility(View.GONE);
                 mGatewayIp.setVisibility(View.VISIBLE);
+                mSubnetIp.setVisibility(View.VISIBLE);
+                mSubnetMask.setVisibility(View.VISIBLE);
                 mDnsServer.setVisibility(View.VISIBLE);
                 mResolveSnLayout.setVisibility(View.GONE);
                 mEncryptionBox.setVisibility(View.VISIBLE);
@@ -420,6 +432,8 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
                 mLocalIP.setVisibility(View.VISIBLE);
                 mLocalIpCheckBox.setVisibility(View.VISIBLE);
                 mGatewayIp.setVisibility(View.GONE);
+                mSubnetIp.setVisibility(View.GONE);
+                mSubnetMask.setVisibility(View.GONE);
                 mDnsServer.setVisibility(View.GONE);
                 mResolveSnLayout.setVisibility(View.VISIBLE);
                 mEncryptionBox.setVisibility(View.GONE);
@@ -442,6 +456,8 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
                 mLocalIP.setVisibility(View.GONE);
                 mLocalIpCheckBox.setVisibility(View.GONE);
                 mGatewayIp.setVisibility(View.VISIBLE);
+                mSubnetIp.setVisibility(View.VISIBLE);
+                mSubnetMask.setVisibility(View.VISIBLE);
                 mDnsServer.setVisibility(View.VISIBLE);
                 mResolveSnLayout.setVisibility(View.GONE);
                 mEncryptionBox.setVisibility(View.VISIBLE);
@@ -500,6 +516,8 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
                         !mAcceptMuticastCheckBox.isChecked(), mUseHttpTunnelCheckBox.isChecked(),
                         mTraceLevelSpinner.getSelectedItemPosition(), !hasSelected,
                         mGatewayIp.getEditText().getText().toString(),
+                        mSubnetIp.getEditText().getText().toString(),
+                        mSubnetMask.getEditText().getText().toString(),
                         mDnsServer.getEditText().getText().toString(),
                         mEncryptionMode.getSelectedItem().toString(),
                         mHeaderEncCheckBox.isChecked());
@@ -553,6 +571,8 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
                         !mAcceptMuticastCheckBox.isChecked(), mUseHttpTunnelCheckBox.isChecked(),
                         mTraceLevelSpinner.getSelectedItemPosition(), mN2NSettingModel.getIsSelcected(),
                         mGatewayIp.getEditText().getText().toString(),
+                        mSubnetIp.getEditText().getText().toString(),
+                        mSubnetMask.getEditText().getText().toString(),
                         mDnsServer.getEditText().getText().toString(),
                         mEncryptionMode.getSelectedItem().toString(),
                         mHeaderEncCheckBox.isChecked());
@@ -721,6 +741,22 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
           return false;
         } else {
           mGatewayIp.setErrorEnabled(false);
+        }
+        if((!mSubnetIp.getEditText().getText().toString().isEmpty()) &&
+            (!EdgeCmd.checkIPV4(mSubnetIp.getEditText().getText().toString()))) {
+          mSubnetIp.setError(mSubnetIp.getHint() + " format is incorrect");
+          mSubnetIp.getEditText().requestFocus();
+          return false;
+        } else {
+          mSubnetIp.setErrorEnabled(false);
+        }
+        if((!mSubnetMask.getEditText().getText().toString().isEmpty()) &&
+            (!mSubnetMask.getEditText().getText().toString().matches("\\d+"))) {
+            mSubnetMask.setError(mSubnetMask.getHint() + " format is incorrect");
+            mSubnetMask.getEditText().requestFocus();
+          return false;
+        } else {
+            mSubnetMask.setErrorEnabled(false);
         }
 
         if((!mDnsServer.getEditText().getText().toString().isEmpty()) &&

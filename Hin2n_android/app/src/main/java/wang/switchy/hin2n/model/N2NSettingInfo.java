@@ -37,6 +37,8 @@ public class N2NSettingInfo implements Parcelable {
     int traceLevel;
     boolean useHttpTunnel;
     String gatewayIp;
+    String subnetIp;
+    String subnetMask;
     String dnsServer;
     String encryptionMode;
     boolean headerEnc;
@@ -65,6 +67,8 @@ public class N2NSettingInfo implements Parcelable {
         this.traceLevel = n2NSettingModel.getTraceLevel();
         this.useHttpTunnel = n2NSettingModel.isUseHttpTunnel();
         this.gatewayIp = n2NSettingModel.getGatewayIp();
+        this.subnetIp = n2NSettingModel.getSubnetIp();
+        this.subnetMask = n2NSettingModel.getSubnetMask();
         this.dnsServer = n2NSettingModel.getDnsServer();
         this.encryptionMode = n2NSettingModel.getEncryptionMode();
         this.headerEnc = n2NSettingModel.getHeaderEnc();
@@ -94,6 +98,8 @@ public class N2NSettingInfo implements Parcelable {
         traceLevel = in.readInt();
         useHttpTunnel = in.readByte() != 0;
         gatewayIp = in.readString();
+        subnetIp = in.readString();
+        subnetMask = in.readString();
         dnsServer = in.readString();
         encryptionMode = in.readString();
         headerEnc = in.readByte() != 0;
@@ -283,6 +289,14 @@ public class N2NSettingInfo implements Parcelable {
         return gatewayIp;
     }
 
+    public String getSubnetIp() {
+        return subnetIp;
+    }
+
+    public String getSubnetMask() {
+        return subnetMask;
+    }
+
     public String getDnsServer() {
         return dnsServer;
     }
@@ -323,6 +337,8 @@ public class N2NSettingInfo implements Parcelable {
                 ", traceLevel=" + traceLevel +
                 ", useHttpTunnel=" + useHttpTunnel +
                 ", gatewayIp=" + gatewayIp +
+                ", subnetIp=" + subnetIp +
+                ", subnetMask=" + subnetMask +
                 ", dnsServer=" + dnsServer +
                 ", encryptionMode=" + encryptionMode +
                 ", headerEnc=" + headerEnc +
@@ -363,6 +379,8 @@ public class N2NSettingInfo implements Parcelable {
         parcel.writeInt(traceLevel);
         parcel.writeByte((byte) (useHttpTunnel ? 1 : 0));
         parcel.writeString(gatewayIp);
+        parcel.writeString(subnetIp);
+        parcel.writeString(subnetMask);
         parcel.writeString(dnsServer);
         parcel.writeString(encryptionMode);
         parcel.writeByte((byte) (headerEnc ? 2 : 0));
