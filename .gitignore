@@ -55,3 +55,9 @@ dkms.conf
 *.iml
 .idea/
 local.properties
+
+# gredle
+.gradle/
+gradle/
+gradlew
+gradlew.bat
