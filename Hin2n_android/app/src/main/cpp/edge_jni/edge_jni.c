@@ -512,6 +512,36 @@ int GetEdgeCmd(JNIEnv *env, jobject jcmd, n2n_edge_cmd_t *cmd) {
         __android_log_print(ANDROID_LOG_DEBUG, "edge_jni", "headerEnc = %d", cmd->header_encryption);
 #endif /* #ifndef NDEBUG */
     }
+    // subnetIp
+    {
+        jstring jSubnetIp = (*env)->GetObjectField(env, jcmd, (*env)->GetFieldID(env, cls, "subnetIp",
+                                                                                 "Ljava/lang/String;"));
+        if (jSubnetIp) {
+            const char *subnetIp = (*env)->GetStringUTFChars(env, jSubnetIp, NULL);
+            if (subnetIp && strlen(subnetIp) != 0) {
+                strncpy(cmd->subnet_ip, subnetIp, EDGE_CMD_IPSTR_SIZE);
+            }
+            (*env)->ReleaseStringUTFChars(env, jSubnetIp, subnetIp);
+#ifndef NDEBUG
+            __android_log_print(ANDROID_LOG_DEBUG, "edge_jni", "subnetIp = %s", cmd->subnet_ip);
+#endif /* #ifndef NDEBUG */
+        }
+    }
+    // subnetMask
+    {
+        jstring jSubnetMask = (*env)->GetObjectField(env, jcmd, (*env)->GetFieldID(env, cls, "subnetMask",
+                                                                                 "Ljava/lang/String;"));
+        if (jSubnetMask) {
+            const char *subnetMask = (*env)->GetStringUTFChars(env, jSubnetMask, NULL);
+            if (subnetMask && strlen(subnetMask) != 0) {
+                strncpy(cmd->subnet_mask, subnetMask, EDGE_CMD_IPSTR_SIZE);
+            }
+            (*env)->ReleaseStringUTFChars(env, jSubnetMask, subnetMask);
+#ifndef NDEBUG
+            __android_log_print(ANDROID_LOG_DEBUG, "edge_jni", "subnetMask = %s", cmd->subnet_mask);
+#endif /* #ifndef NDEBUG */
+        }
+    }
 
     return 0;
 }

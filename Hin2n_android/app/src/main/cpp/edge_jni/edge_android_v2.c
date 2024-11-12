@@ -45,6 +45,8 @@ typedef struct {
     uint8_t tap_mac[6];
     uint32_t tap_ipaddr;
     time_t lastArpPeriod;
+    uint32_t subnet_ip;
+    uint32_t subnet_mask;
 } n2n_android_t;
 
 /* ***************************************************** */
@@ -343,6 +345,16 @@ static n2n_verdict on_packet_from_tap(n2n_edge_t *eee, uint8_t *payload,
 
         /* Overwrite the destination MAC with the actual gateway mac address */
         memcpy(payload, priv->gateway_mac, 6);
+    } else if ((*payload_size > 34) && (priv->subnet_ip != 0) && (priv->subnet_mask != 0)) {
+        /* Check if the destination IP is in the subnet that should be routed via gateway */
+        uint32_t dest_ip;
+        memcpy(&dest_ip, &payload[30], 4);
+        
+        if ((dest_ip & priv->subnet_mask) == (priv->subnet_ip & priv->subnet_mask)) {
+             traceEvent(TRACE_DEBUG, "Detected packet for the subnet route");
+             /* Overwrite the destination MAC with the actual gateway mac address */
+             memcpy(payload, priv->gateway_mac, 6);
+        }
     }
 
     return (N2N_ACCEPT);
@@ -526,6 +538,10 @@ int start_edge_v2(n2n_edge_status_t *status) {
     /* Private Status */
     memset(&private_status, 0, sizeof(private_status));
     private_status.gateway_ip = gateway_ip.s_addr;
+    if (cmd->subnet_ip[0] != '\0')
+        private_status.subnet_ip = inet_addr(cmd->subnet_ip);
+    if (cmd->subnet_mask[0] != '\0')
+        private_status.subnet_mask = inet_addr(cmd->subnet_mask);
     private_status.conf = &conf;
     memcpy(private_status.tap_mac, hex_mac, 6);
     inet_aton(ip_addr, &tap_ip);
@@ -779,6 +795,10 @@ int start_edge_v3(n2n_edge_status_t *status) {
     /* Private Status */
     memset(&private_status, 0, sizeof(private_status));
     private_status.gateway_ip = gateway_ip.s_addr;
+    if (cmd->subnet_ip[0] != '\0')
+        private_status.subnet_ip = inet_addr(cmd->subnet_ip);
+    if (cmd->subnet_mask[0] != '\0')
+        private_status.subnet_mask = inet_addr(cmd->subnet_mask);
     private_status.conf = &conf;
     memcpy(private_status.tap_mac, hex_mac, 6);
     inet_aton(ip_addr, &tap_ip);

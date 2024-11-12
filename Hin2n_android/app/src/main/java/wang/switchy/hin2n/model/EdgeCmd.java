@@ -29,12 +29,14 @@ public class EdgeCmd {
     public String logPath;
     public String encryptionMode;
     public boolean headerEnc;
+    public String subnetIp;
+    public String subnetMask;
 
     public EdgeCmd(int edgeType, int ipMode, String ipAddr, String ipNetmask, String[] supernodes, String community,
                    String encKey, String devDesc, String encKeyFile, String macAddr, int mtu, String localIP, int holePunchInterval,
                    boolean reResoveSupernodeIP, int localPort, boolean allowRouting, boolean dropMuticast,
                    boolean httpTunnel, int traceLevel, int vpnFd, String logPath, String gatewayIp, String dnsServer,
-                   String encryptionMode, boolean headerEnc) {
+                   String encryptionMode, boolean headerEnc, String subnetIp, String subnetMask) {
         this.edgeType = edgeType;
         this.ipMode = ipMode;
         this.ipAddr = ipAddr;
@@ -60,6 +62,8 @@ public class EdgeCmd {
         this.dnsServer = dnsServer;
         this.encryptionMode = encryptionMode;
         this.headerEnc = headerEnc;
+        this.subnetIp = subnetIp;
+        this.subnetMask = subnetMask;
     }
 
     public EdgeCmd(N2NSettingInfo n2NSettingInfo, int vpnFd, String logPath){
@@ -90,6 +94,8 @@ public class EdgeCmd {
         this.dnsServer = n2NSettingInfo.getDnsServer();
         this.encryptionMode = n2NSettingInfo.getEncryptionMode();
         this.headerEnc = n2NSettingInfo.isHeaderEnc();
+        this.subnetIp = n2NSettingInfo.getSubnetIp();
+        this.subnetMask = n2NSettingInfo.getSubnetMask();
     }
 
     public boolean checkValues(Vector<String> invalids) {

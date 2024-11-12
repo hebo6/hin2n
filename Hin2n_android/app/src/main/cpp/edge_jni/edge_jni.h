@@ -43,6 +43,8 @@ typedef struct n2n_edge_cmd_st
     char* logpath;
     char* devDesc;
     int header_encryption;
+    char subnet_ip[EDGE_CMD_IPSTR_SIZE];
+    char subnet_mask[EDGE_CMD_IPSTR_SIZE];
 } n2n_edge_cmd_t;
 
 enum
