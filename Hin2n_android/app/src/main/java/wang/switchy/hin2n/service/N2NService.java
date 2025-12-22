@@ -44,7 +44,7 @@ import static wang.switchy.hin2n.tool.N2nTools.getRoute;
 
 public class N2NService extends VpnService {
 
-    public static N2NService INSTANCE;
+    public static volatile N2NService INSTANCE;
 
     private ParcelFileDescriptor mParcelFileDescriptor = null;
     private EdgeCmd cmd;
@@ -168,6 +168,7 @@ public class N2NService extends VpnService {
             startForeground(1, notification);
         }
 
+        N2NTileService.updateTileState(this);
         return super.onStartCommand(intent, flags, startId);
     }
 
@@ -211,6 +212,7 @@ public class N2NService extends VpnService {
                         if(mFileObserver != null){
                             mFileObserver.stopWatching();  //清除日志文件会导致FileObserver失效，要先stop再start
                         }
+                        N2NTileService.updateTileState(N2NService.this);
                         if (onStopCallback != null)
                             onStopCallback.run();
 
@@ -237,6 +239,7 @@ public class N2NService extends VpnService {
         if (EventBus.getDefault().isRegistered(this)) {
             EventBus.getDefault().unregister(this);
         }
+        INSTANCE = null;
     }
 
     public native boolean startEdge(EdgeCmd cmd);
@@ -288,6 +291,7 @@ public class N2NService extends VpnService {
             default:
                 break;
         }
+        N2NTileService.updateTileState(this);
     }
 
     public EdgeStatus.RunningStatus getCurrentStatus() {
