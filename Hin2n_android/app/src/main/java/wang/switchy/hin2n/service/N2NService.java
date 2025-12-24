@@ -26,6 +26,7 @@ import org.greenrobot.eventbus.ThreadMode;
 import wang.switchy.hin2n.R;
 import wang.switchy.hin2n.activity.MainActivity;
 import wang.switchy.hin2n.event.*;
+import wang.switchy.hin2n.receiver.N2NWidgetProvider;
 import wang.switchy.hin2n.model.EdgeCmd;
 import wang.switchy.hin2n.model.EdgeStatus;
 import wang.switchy.hin2n.model.N2NSettingInfo;
@@ -169,6 +170,7 @@ public class N2NService extends VpnService {
         }
 
         N2NTileService.updateTileState(this);
+        N2NWidgetProvider.updateAllWidgets(this);
         return super.onStartCommand(intent, flags, startId);
     }
 
@@ -213,6 +215,7 @@ public class N2NService extends VpnService {
                             mFileObserver.stopWatching();  //清除日志文件会导致FileObserver失效，要先stop再start
                         }
                         N2NTileService.updateTileState(N2NService.this);
+                        N2NWidgetProvider.updateAllWidgets(N2NService.this);
                         if (onStopCallback != null)
                             onStopCallback.run();
 
@@ -292,6 +295,7 @@ public class N2NService extends VpnService {
                 break;
         }
         N2NTileService.updateTileState(this);
+        N2NWidgetProvider.updateAllWidgets(this);
     }
 
     public EdgeStatus.RunningStatus getCurrentStatus() {
