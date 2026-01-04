@@ -48,11 +48,11 @@ public class N2NSettingModelDao extends AbstractDao<N2NSettingModel, Long> {
         public final static Property TraceLevel = new Property(21, int.class, "traceLevel", false, "TRACE_LEVEL");
         public final static Property IsSelcected = new Property(22, boolean.class, "isSelcected", false, "IS_SELCECTED");
         public final static Property GatewayIp = new Property(23, String.class, "gatewayIp", false, "GATEWAY_IP");
-        public final static Property SubnetIp = new Property(23, String.class, "subnetIp", false, "SUBNET_IP");
-        public final static Property SubnetMask = new Property(23, String.class, "subnetMask", false, "SUBNET_MASK");
-        public final static Property DnsServer = new Property(24, String.class, "dnsServer", false, "DNS_SERVER");
-        public final static Property EncryptionMode = new Property(25, String.class, "encryptionMode", false, "ENCRYPTION_MODE");
-        public final static Property HeaderEnc = new Property(26, boolean.class, "headerEnc", false, "HEADER_ENC");
+        public final static Property SubnetIp = new Property(24, String.class, "subnetIp", false, "SUBNET_IP");
+        public final static Property SubnetMask = new Property(25, String.class, "subnetMask", false, "SUBNET_MASK");
+        public final static Property DnsServer = new Property(26, String.class, "dnsServer", false, "DNS_SERVER");
+        public final static Property EncryptionMode = new Property(27, String.class, "encryptionMode", false, "ENCRYPTION_MODE");
+        public final static Property HeaderEnc = new Property(28, boolean.class, "headerEnc", false, "HEADER_ENC");
     }
 
 
@@ -95,8 +95,8 @@ public class N2NSettingModelDao extends AbstractDao<N2NSettingModel, Long> {
                 "\"SUBNET_IP\" TEXT," + // 24: subnetIp
                 "\"SUBNET_MASK\" TEXT," + // 25: subnetMask
                 "\"DNS_SERVER\" TEXT," + // 26: dnsServer
-                "\"ENCRYPTION_MODE\" TEXT ," + // 27: encryptionMode
-                "\"HEADER_ENC\" INTEGER NOT NULL);"); // 28: headerEnc
+                "\"ENCRYPTION_MODE\" TEXT," + // 27: encryptionMode
+                "\"HEADER_ENC\" INTEGER NOT NULL );"); // 28: headerEnc
     }
 
     /** Drops the underlying database table. */
@@ -180,12 +180,12 @@ public class N2NSettingModelDao extends AbstractDao<N2NSettingModel, Long> {
         if (gatewayIp != null) {
             stmt.bindString(24, gatewayIp);
         }
-
+ 
         String subnetIp = entity.getSubnetIp();
         if (subnetIp != null) {
             stmt.bindString(25, subnetIp);
         }
-
+ 
         String subnetMask = entity.getSubnetMask();
         if (subnetMask != null) {
             stmt.bindString(26, subnetMask);
@@ -278,12 +278,12 @@ public class N2NSettingModelDao extends AbstractDao<N2NSettingModel, Long> {
         if (gatewayIp != null) {
             stmt.bindString(24, gatewayIp);
         }
-
+ 
         String subnetIp = entity.getSubnetIp();
         if (subnetIp != null) {
             stmt.bindString(25, subnetIp);
         }
-
+ 
         String subnetMask = entity.getSubnetMask();
         if (subnetMask != null) {
             stmt.bindString(26, subnetMask);

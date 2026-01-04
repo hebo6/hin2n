@@ -37,6 +37,16 @@
  *  @return - negative value on error
  *          - non-negative file-descriptor on success
  */
+#ifdef N2N_V3
+int tuntap_open(tuntap_dev *device, 
+                char *dev, /* user-definable interface name, eg. edge0 */
+                const char *address_mode, /* static or dhcp */
+                char *device_ip, 
+                char *device_mask,
+                const char * device_mac,
+		        int mtu,
+		        int metric) {
+#else
 int tuntap_open(tuntap_dev *device, 
                 char *dev, /* user-definable interface name, eg. edge0 */
                 const char *address_mode, /* static or dhcp */
@@ -44,8 +54,14 @@ int tuntap_open(tuntap_dev *device,
                 char *device_mask,
                 const char * device_mac,
 		        int mtu) {
+#endif
     int i, n_matched;
     unsigned int mac[6];
+
+    (void)address_mode; /* unused */
+#ifdef N2N_V3
+    (void)metric; /* unused on Android */
+#endif
 
     n_matched = sscanf(device_mac, "%x:%x:%x:%x:%x:%x", mac, mac + 1, mac + 2, mac + 3, mac + 4, mac + 5);
     if (n_matched != 6) {

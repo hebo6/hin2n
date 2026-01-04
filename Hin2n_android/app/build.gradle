@@ -91,6 +91,7 @@ android {
             cmake {
                 cppFlags ""
                 cFlags "-D__ANDROID_NDK__"
+                arguments "-DCMAKE_C_FLAGS=-DSKIP_MULTICAST_PEERS_DISCOVERY"
             }
         }
     }

@@ -18,6 +18,7 @@
 
 #include "n2n.h"
 
+#include <errno.h>
 #include <edge_jni/edge_jni.h>
 #include <tun2tap/tun2tap.h>
 #include <n2n.h>
@@ -26,6 +27,10 @@
 #define N2N_MACNAMSIZ           18 /* AA:BB:CC:DD:EE:FF + NULL*/
 #define N2N_IF_MODE_SIZE        16 /* static | dhcp */
 #define ARP_PERIOD_INTERVAL     10 /* sec */
+
+#ifndef MIN
+#define MIN(a,b) (((a)<(b))?(a):(b))
+#endif
 
 /* Shared status. Must call pthread_mutex_lock before use. */
 n2n_edge_status_t *g_status;
@@ -637,7 +642,7 @@ int stop_edge_v2(void) {
 int g_stop_initial = 0;
 
 int start_edge_v3(n2n_edge_status_t *status) {
-    int keep_on_running = 0;
+    bool keep_on_running = 0;
     char tuntap_dev_name[N2N_IFNAMSIZ] = "tun0";
     char ip_mode[N2N_IF_MODE_SIZE] = "static";
     char ip_addr[N2N_NETMASK_STR_SIZE] = "";
@@ -1015,7 +1020,7 @@ int start_edge_v3(n2n_edge_status_t *status) {
         
             if(tuntap_open(&tuntap, eee->tuntap_priv_conf.tuntap_dev_name, eee->tuntap_priv_conf.ip_mode,
                            eee->tuntap_priv_conf.ip_addr, eee->tuntap_priv_conf.netmask,
-                           eee->tuntap_priv_conf.device_mac, eee->tuntap_priv_conf.mtu) < 0)
+                           eee->tuntap_priv_conf.device_mac, eee->tuntap_priv_conf.mtu, 0) < 0)
                 goto cleanup;
             memcpy(&eee->device, &tuntap, sizeof(tuntap));
             traceEvent(TRACE_NORMAL, "Created local tap device IP: %s, Mask: %s, MAC: %s",

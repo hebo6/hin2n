@@ -78,9 +78,53 @@ target_include_directories(edge_v2 PUBLIC
 target_link_libraries(edge_v2 uip)
 target_link_libraries(edge_v2 ${OPENSSL_LIBRARIES})
 
+# Configure n2n_v3 config.h
+set(PACKAGE_NAME "n2n")
+set(PACKAGE_VERSION "${N2N_VERSION}")
+set(PACKAGE_STRING "${PACKAGE_NAME} ${PACKAGE_VERSION}")
+set(PACKAGE_TARNAME "${PACKAGE_NAME}")
+set(PACKAGE_BUGREPORT "https://github.com/ntop/n2n/issues")
+set(PACKAGE_URL "https://github.com/ntop/n2n")
+string(TIMESTAMP PACKAGE_BUILDDATE "%Y-%m-%d")
+
+if(N2N_OPTION_ZSTD)
+    set(HAVE_LIBZSTD 1)
+endif()
+if(N2N_OPTION_OPENSSL)
+    set(HAVE_LIBCRYPTO 1)
+endif()
+if(N2N_OPTION_MINIUPNP)
+    set(HAVE_LIBMINIUPNPC 1)
+endif()
+if(N2N_OPTION_NATPMP)
+    set(HAVE_LIBNATPMP 1)
+endif()
+if(N2N_OPTION_CAP)
+    set(HAVE_LIBCAP 1)
+endif()
+if(N2N_OPTION_PTHREAD)
+    set(HAVE_LIBPTHREAD 1)
+endif()
+
+# OS specific defines for Android
+set(HAVE_NETINET_IN_H 1)
+set(HAVE_ARPA_INET_H 1)
+set(HAVE_NETDB_H 1)
+set(HAVE_SYS_SOCKET_H 1)
+set(HAVE_SYS_TYPES_H 1)
+set(HAVE_UNISTD_H 1)
+
+configure_file(
+    src/main/cpp/n2n_v3/cmake/config.h.in
+    ${CMAKE_BINARY_DIR}/n2n_v3/include/config.h
+)
+include_directories(${CMAKE_BINARY_DIR}/n2n_v3/include)
+
 add_library(edge_v3 SHARED
         src/main/cpp/n2n_v3/src/n2n.c
         src/main/cpp/n2n_v3/src/edge_management.c
+        src/main/cpp/n2n_v3/src/management.c
+        src/main/cpp/n2n_v3/src/json.c
         src/main/cpp/n2n_v3/src/curve25519.c
         src/main/cpp/n2n_v3/src/auth.c
         src/main/cpp/n2n_v3/src/edge_utils.c
@@ -95,6 +139,7 @@ add_library(edge_v3 SHARED
         src/main/cpp/n2n_v3/src/transform_aes.c
         src/main/cpp/n2n_v3/src/transform_speck.c
         src/main/cpp/n2n_v3/src/transform_cc20.c
+        src/main/cpp/n2n_v3/src/transform_lzo.c
         src/main/cpp/n2n_v3/src/cc20.c
         src/main/cpp/n2n_v3/src/aes.c
         src/main/cpp/n2n_v3/src/network_traffic_filter.c

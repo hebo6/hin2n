@@ -61,3 +61,15 @@ local.properties
 gradle/
 gradlew
 gradlew.bat
+
+# Eclipse
+.project
+.classpath
+.settings/
+.cproject
+.pydevproject
+.metadata/
+
+# Visual Studio Code
+.vscode/
+*.code-workspace
