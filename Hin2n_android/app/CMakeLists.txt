@@ -25,6 +25,16 @@ LINK_DIRECTORIES(${OPENSSL_LIBRARIES_DIR})
 OPTION(N2N_OPTION_OPENSSL "Enable OpenSSL support" ON)
 set(N2N_OPTION_OPENSSL ON)
 
+# ZSTD (via submodule)
+OPTION(N2N_OPTION_ZSTD "Enable ZSTD support" ON)
+set(ZSTD_BUILD_PROGRAMS OFF CACHE BOOL "Build zstd programs")
+set(ZSTD_BUILD_TESTS OFF CACHE BOOL "Build zstd tests")
+set(ZSTD_BUILD_SHARED OFF CACHE BOOL "Build shared library")
+set(ZSTD_BUILD_STATIC ON CACHE BOOL "Build static library")
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../bundles/zstd/build/cmake zstd_build)
+set(ZSTD_LIBRARIES libzstd_static)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../bundles/zstd/lib)
+
 if(CMAKE_BUILD_TYPE)
 if(NOT ${CMAKE_BUILD_TYPE} STREQUAL Debug)
 set(CMAKE_BUILD_TYPE Release)
@@ -106,6 +116,7 @@ add_library(edge_v3 SHARED
         src/main/cpp/n2n_v3/src/transform_speck.c
         src/main/cpp/n2n_v3/src/transform_cc20.c
         src/main/cpp/n2n_v3/src/transform_lzo.c
+        src/main/cpp/n2n_v3/src/transform_zstd.c
         src/main/cpp/n2n_v3/src/cc20.c
         src/main/cpp/n2n_v3/src/aes.c
         src/main/cpp/n2n_v3/src/network_traffic_filter.c
@@ -125,6 +136,7 @@ target_include_directories(edge_v3 PUBLIC
         )
 target_link_libraries(edge_v3 uip)
 target_link_libraries(edge_v3 ${OPENSSL_LIBRARIES})
+target_link_libraries(edge_v3 ${ZSTD_LIBRARIES})
 
 
 

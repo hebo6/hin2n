@@ -31,12 +31,13 @@ public class EdgeCmd {
     public boolean headerEnc;
     public String subnetIp;
     public String subnetMask;
+    public String compressionMode;
 
     public EdgeCmd(int edgeType, int ipMode, String ipAddr, String ipNetmask, String[] supernodes, String community,
                    String encKey, String devDesc, String encKeyFile, String macAddr, int mtu, String localIP, int holePunchInterval,
                    boolean reResoveSupernodeIP, int localPort, boolean allowRouting, boolean dropMuticast,
                    boolean httpTunnel, int traceLevel, int vpnFd, String logPath, String gatewayIp, String dnsServer,
-                   String encryptionMode, boolean headerEnc, String subnetIp, String subnetMask) {
+                   String encryptionMode, boolean headerEnc, String subnetIp, String subnetMask, String compressionMode) {
         this.edgeType = edgeType;
         this.ipMode = ipMode;
         this.ipAddr = ipAddr;
@@ -64,6 +65,7 @@ public class EdgeCmd {
         this.headerEnc = headerEnc;
         this.subnetIp = subnetIp;
         this.subnetMask = subnetMask;
+        this.compressionMode = compressionMode;
     }
 
     public EdgeCmd(N2NSettingInfo n2NSettingInfo, int vpnFd, String logPath){
@@ -96,6 +98,7 @@ public class EdgeCmd {
         this.headerEnc = n2NSettingInfo.isHeaderEnc();
         this.subnetIp = n2NSettingInfo.getSubnetIp();
         this.subnetMask = n2NSettingInfo.getSubnetMask();
+        this.compressionMode = n2NSettingInfo.getCompressionMode();
     }
 
     public boolean checkValues(Vector<String> invalids) {

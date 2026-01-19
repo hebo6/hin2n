@@ -46,6 +46,7 @@ public class N2NSettingModel /*implements Parcelable*/ {
     String dnsServer;
     String encryptionMode;
     boolean headerEnc;
+    String compressionMode;
 
 
     public String getSuperNode() {
@@ -262,11 +263,19 @@ public class N2NSettingModel /*implements Parcelable*/ {
         this.headerEnc = headerEnc;
     }
 
-    @Generated(hash = 1323541210)
-    public N2NSettingModel(Long id, int version, String name, int ipMode, String ip, String netmask, String community, String password, String devDesc,
-            String superNode, boolean moreSettings, String superNodeBackup, String macAddr, int mtu, String localIP, int holePunchInterval,
-            boolean resoveSupernodeIP, int localPort, boolean allowRouting, boolean dropMuticast, boolean useHttpTunnel, int traceLevel,
-            boolean isSelcected, String gatewayIp, String subnetIp, String subnetMask, String dnsServer, String encryptionMode, boolean headerEnc) {
+    public String getCompressionMode() {
+        return this.compressionMode;
+    }
+
+    public void setCompressionMode(String mode) {
+        this.compressionMode = mode;
+    }
+
+    @Generated(hash = 2015267734)
+    public N2NSettingModel(Long id, int version, String name, int ipMode, String ip, String netmask, String community, String password, String devDesc, String superNode,
+            boolean moreSettings, String superNodeBackup, String macAddr, int mtu, String localIP, int holePunchInterval, boolean resoveSupernodeIP, int localPort,
+            boolean allowRouting, boolean dropMuticast, boolean useHttpTunnel, int traceLevel, boolean isSelcected, String gatewayIp, String subnetIp, String subnetMask,
+            String dnsServer, String encryptionMode, boolean headerEnc, String compressionMode) {
         this.id = id;
         this.version = version;
         this.name = name;
@@ -296,6 +305,7 @@ public class N2NSettingModel /*implements Parcelable*/ {
         this.dnsServer = dnsServer;
         this.encryptionMode = encryptionMode;
         this.headerEnc = headerEnc;
+        this.compressionMode = compressionMode;
     }
 
     @Generated(hash = 998225630)

@@ -17,6 +17,7 @@
 #define EDGE_CMD_COMMUNITY_SIZE 21
 #define EDGE_CMD_HOLEPUNCH_INTERVAL 25
 #define EDGE_CMD_ENCRYPTION_MODE_SIZE 16
+#define EDGE_CMD_COMPRESSION_MODE_SIZE 32
 
 typedef struct n2n_edge_cmd_st
 {
@@ -45,6 +46,7 @@ typedef struct n2n_edge_cmd_st
     int header_encryption;
     char subnet_ip[EDGE_CMD_IPSTR_SIZE];
     char subnet_mask[EDGE_CMD_IPSTR_SIZE];
+    char compression_mode[EDGE_CMD_COMPRESSION_MODE_SIZE];
 } n2n_edge_cmd_t;
 
 enum

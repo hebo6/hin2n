@@ -493,6 +493,21 @@ int GetEdgeCmd(JNIEnv *env, jobject jcmd, n2n_edge_cmd_t *cmd) {
 #endif /* #ifndef NDEBUG */
         }
     }
+    // compressionMode
+    {
+        jstring jCompressionMode = (*env)->GetObjectField(env, jcmd, (*env)->GetFieldID(env, cls, "compressionMode",
+                                                                                      "Ljava/lang/String;"));
+        if (jCompressionMode) {
+            const char *compMode = (*env)->GetStringUTFChars(env, jCompressionMode, NULL);
+            if (compMode && strlen(compMode) != 0) {
+                strncpy(cmd->compression_mode, compMode, EDGE_CMD_COMPRESSION_MODE_SIZE);
+            }
+            (*env)->ReleaseStringUTFChars(env, jCompressionMode, compMode);
+#ifndef NDEBUG
+            __android_log_print(ANDROID_LOG_DEBUG, "edge_jni", "compressionMode = %s", cmd->compression_mode);
+#endif /* #ifndef NDEBUG */
+        }
+    }
 
     return 0;
 }

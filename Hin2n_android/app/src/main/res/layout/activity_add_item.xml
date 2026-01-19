@@ -197,7 +197,28 @@
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/ll_n2n_compression"
+                    android:orientation="vertical"
+                    android:layout_marginTop="5dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
                     android:layout_below="@id/ll_n2n_encryption"
+                    android:hint="Compression method">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Compression method"/>
+
+                    <Spinner
+                        android:id="@+id/til_compression_mode"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+                    </Spinner>
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_below="@id/ll_n2n_compression"
                     android:id="@+id/til_super_node_2"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

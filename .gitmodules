@@ -2,3 +2,6 @@
 	path = bundles/n2n_ntop_v3
 	url = https://github.com/hebo6/n2n.git
 	branch = dev
+[submodule "bundles/zstd"]
+	path = bundles/zstd
+	url = https://github.com/facebook/zstd.git
