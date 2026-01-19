@@ -1,41 +1,47 @@
-<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
               android:layout_width="match_parent"
               android:layout_height="match_parent"
               android:orientation="vertical">
 
-    <RelativeLayout
-        android:id="@+id/rl_title"
+    <FrameLayout
+        android:id="@+id/fl_title_container"
         android:layout_width="match_parent"
-        android:layout_height="50dp"
+        android:layout_height="wrap_content"
+        android:fitsSystemWindows="true"
         android:background="@color/colorPrimary">
 
-        <ImageView
-            android:id="@+id/iv_left_img"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerVertical="true"
-            android:padding="10dp"
-            android:visibility="visible"/>
+        <RelativeLayout
+            android:id="@+id/rl_title"
+            android:layout_width="match_parent"
+            android:layout_height="50dp">
 
-        <TextView
-            android:id="@+id/tv_title"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
-            android:text="Hin2n"
-            android:textColor="@android:color/white"
-            android:textSize="20dp"/>
+            <ImageView
+                android:id="@+id/iv_left_img"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:padding="10dp"
+                android:visibility="visible"/>
 
-        <ImageView
-            android:id="@+id/iv_right_img"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentRight="true"
-            android:layout_centerVertical="true"
-            android:padding="10dp"
-            android:visibility="visible"/>
-    </RelativeLayout>
+            <TextView
+                android:id="@+id/tv_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:text="Hin2n"
+                android:textColor="@android:color/white"
+                android:textSize="20dp"/>
+
+            <ImageView
+                android:id="@+id/iv_right_img"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:layout_centerVertical="true"
+                android:padding="10dp"
+                android:visibility="visible"/>
+        </RelativeLayout>
+    </FrameLayout>
 
     <FrameLayout
         android:id="@+id/fl_container"

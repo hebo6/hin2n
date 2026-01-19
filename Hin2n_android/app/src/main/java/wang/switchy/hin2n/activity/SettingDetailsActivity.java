@@ -390,148 +390,102 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
 
     @Override
     public void onClick(View view) {
-        switch (view.getId()) {
-            case R.id.btn_save:
-                if (!checkValues()) {
-                    return;
+        int id = view.getId();
+        if (id == R.id.btn_save) {
+            if (!checkValues()) {
+                return;
+            }
+
+            N2NSettingModelDao n2NSettingModelDao = Hin2nApplication.getInstance().getDaoSession().getN2NSettingModelDao();
+            String settingName = mSettingName.getEditText().getText().toString();
+            String setingNameTmp = settingName;//原始字符串
+            int i = 0;
+            while (n2NSettingModelDao.queryBuilder().where(N2NSettingModelDao.Properties.Name.eq(settingName)).unique() != null) {
+                i++;
+                settingName = setingNameTmp + "(" + i + ")";
+            }
+
+            boolean hasSelected = false;
+            if (n2NSettingModelDao.queryBuilder().where(N2NSettingModelDao.Properties.IsSelcected.eq(true)).unique() != null) {
+                hasSelected = true;
+            }
+
+            mN2NSettingModel = createN2NSettingModel(null, settingName, !hasSelected);
+            n2NSettingModelDao.insert(mN2NSettingModel);
+
+            if (!hasSelected) {
+                mN2NSettingModel = n2NSettingModelDao.queryBuilder().where(N2NSettingModelDao.Properties.IsSelcected.eq(true)).unique();
+                mHin2nEdit.putLong("current_setting_id", mN2NSettingModel.getId());
+                mHin2nEdit.commit();
+            }
+
+            new SweetAlertDialog(this, SweetAlertDialog.SUCCESS_TYPE)
+                    .setTitleText(getString(R.string.dialog_add_succeed))
+                    .setConfirmClickListener(new SweetAlertDialog.OnSweetClickListener() {
+                        @Override
+                        public void onClick(SweetAlertDialog sweetAlertDialog) {
+                            finish();
+                            sweetAlertDialog.dismiss();
+                        }
+                    }).show();
+        } else if (id == R.id.btn_modify) {
+            if (!checkValues()) {
+                return;
+            }
+
+            N2NSettingModelDao n2NSettingModelDao1 = Hin2nApplication.getInstance().getDaoSession().getN2NSettingModelDao();
+            String settingName1 = mSettingName.getEditText().getText().toString();
+            String setingNameTmp1 = settingName1;//原始字符串
+            int i1 = 0;
+            N2NSettingModel n2NSettingModelTmp = n2NSettingModelDao1.queryBuilder().where(N2NSettingModelDao.Properties.Name.eq(settingName1)).unique();
+            while (n2NSettingModelTmp != null) {
+                if (n2NSettingModelTmp.getId() == mSaveId) {
+                    break;
                 }
 
-                N2NSettingModelDao n2NSettingModelDao = Hin2nApplication.getInstance().getDaoSession().getN2NSettingModelDao();
-                String settingName = mSettingName.getEditText().getText().toString();
-                String setingNameTmp = settingName;//原始字符串
-                int i = 0;
-                while (n2NSettingModelDao.queryBuilder().where(N2NSettingModelDao.Properties.Name.eq(settingName)).unique() != null) {
-                    i++;
-                    settingName = setingNameTmp + "(" + i + ")";
-                }
+                i1++;
+                settingName1 = setingNameTmp1 + "(" + i1 + ")";
+                n2NSettingModelTmp = n2NSettingModelDao1.queryBuilder().where(N2NSettingModelDao.Properties.Name.eq(settingName1)).unique();
+            }
 
-                boolean hasSelected = false;
-                if (n2NSettingModelDao.queryBuilder().where(N2NSettingModelDao.Properties.IsSelcected.eq(true)).unique() != null) {
-                    hasSelected = true;
-                }
+            mN2NSettingModel = createN2NSettingModel(mSaveId, settingName1, mN2NSettingModel.getIsSelcected());
+            n2NSettingModelDao1.update(mN2NSettingModel);
 
-                mN2NSettingModel = new N2NSettingModel(null, getN2nVersion(), settingName, mGetIpFromSupernodeCheckBox.isChecked() ? 1 : 0,
-                        mIpAddressTIL.getEditText().getText().toString(), mNetMaskTIL.getEditText().getText().toString(),
-                        mCommunityTIL.getEditText().getText().toString(), mEncryptTIL.getEditText().getText().toString(),
-                        mDevDescTIL.getEditText().getText().toString(),
-                        mSuperNodeTIL.getEditText().getText().toString(), mMoreSettingCheckBox.isChecked(),
-                        mSuperNodeBackup.getEditText().getText().toString(), mMacAddr.getEditText().getText().toString(),
-                        Integer.valueOf(mMtu.getEditText().getText().toString()), mLocalIpCheckBox.isChecked() ? "auto" : mLocalIP.getEditText().getText().toString(),
-                        Integer.valueOf(mHolePunchInterval.getEditText().getText().toString()), mResoveSupernodeIPCheckBox.isChecked(),
-                        Integer.valueOf(mLocalPort.getEditText().getText().toString()), mAllowRoutinCheckBox.isChecked(),
-                        !mAcceptMuticastCheckBox.isChecked(), false,
-                        mTraceLevelSpinner.getSelectedItemPosition(), !hasSelected,
-                        mGatewayIp.getEditText().getText().toString(),
-                        mSubnetIp.getEditText().getText().toString(),
-                        mSubnetMask.getEditText().getText().toString(),
-                        mDnsServer.getEditText().getText().toString(),
-                        mEncryptionMode.getSelectedItem().toString(),
-                        mHeaderEncCheckBox.isChecked(),
-                        mCompressionMode.getSelectedItem().toString());
-                n2NSettingModelDao.insert(mN2NSettingModel);
-
-                if (!hasSelected) {
-                    mN2NSettingModel = n2NSettingModelDao.queryBuilder().where(N2NSettingModelDao.Properties.IsSelcected.eq(true)).unique();
-                    mHin2nEdit.putLong("current_setting_id", mN2NSettingModel.getId());
-                    mHin2nEdit.commit();
-                }
-
-                new SweetAlertDialog(this, SweetAlertDialog.SUCCESS_TYPE)
-                        .setTitleText(getString(R.string.dialog_add_succeed))
-                        .setConfirmClickListener(new SweetAlertDialog.OnSweetClickListener() {
-                            @Override
-                            public void onClick(SweetAlertDialog sweetAlertDialog) {
-                                finish();
-                                sweetAlertDialog.dismiss();
-                            }
-                        }).show();
-                break;
-            case R.id.btn_modify:
-                if (!checkValues()) {
-                    return;
-                }
-
-                N2NSettingModelDao n2NSettingModelDao1 = Hin2nApplication.getInstance().getDaoSession().getN2NSettingModelDao();
-                String settingName1 = mSettingName.getEditText().getText().toString();
-                String setingNameTmp1 = settingName1;//原始字符串
-                int i1 = 0;
-                N2NSettingModel n2NSettingModelTmp = n2NSettingModelDao1.queryBuilder().where(N2NSettingModelDao.Properties.Name.eq(settingName1)).unique();
-                while (n2NSettingModelTmp != null) {
-                    if (n2NSettingModelTmp.getId() == mSaveId) {
-                        break;
-                    }
-
-                    i1++;
-                    settingName1 = setingNameTmp1 + "(" + i1 + ")";
-                    n2NSettingModelTmp = n2NSettingModelDao1.queryBuilder().where(N2NSettingModelDao.Properties.Name.eq(settingName1)).unique();
-                }
-
-                mN2NSettingModel = new N2NSettingModel(mSaveId, getN2nVersion(), settingName1, mGetIpFromSupernodeCheckBox.isChecked() ? 1 : 0,
-                        mIpAddressTIL.getEditText().getText().toString(), mNetMaskTIL.getEditText().getText().toString(),
-                        mCommunityTIL.getEditText().getText().toString(), mEncryptTIL.getEditText().getText().toString(),
-                        mDevDescTIL.getEditText().getText().toString(),
-                        mSuperNodeTIL.getEditText().getText().toString(), mMoreSettingCheckBox.isChecked(),
-                        mSuperNodeBackup.getEditText().getText().toString(), mMacAddr.getEditText().getText().toString(),
-                        Integer.valueOf(mMtu.getEditText().getText().toString()), mLocalIpCheckBox.isChecked() ? "auto" : mLocalIP.getEditText().getText().toString(),
-                        Integer.valueOf(mHolePunchInterval.getEditText().getText().toString()), mResoveSupernodeIPCheckBox.isChecked(),
-                        Integer.valueOf(mLocalPort.getEditText().getText().toString()), mAllowRoutinCheckBox.isChecked(),
-                        !mAcceptMuticastCheckBox.isChecked(), false,
-                        mTraceLevelSpinner.getSelectedItemPosition(), mN2NSettingModel.getIsSelcected(),
-                        mGatewayIp.getEditText().getText().toString(),
-                        mSubnetIp.getEditText().getText().toString(),
-                        mSubnetMask.getEditText().getText().toString(),
-                        mDnsServer.getEditText().getText().toString(),
-                        mEncryptionMode.getSelectedItem().toString(),
-                        mHeaderEncCheckBox.isChecked(),
-                        mCompressionMode.getSelectedItem().toString());
-                n2NSettingModelDao1.update(mN2NSettingModel);
-
-                if (N2NService.INSTANCE != null &&
-                        N2NService.INSTANCE.getCurrentStatus() != EdgeStatus.RunningStatus.DISCONNECT &&
-                        N2NService.INSTANCE.getCurrentStatus() != EdgeStatus.RunningStatus.FAILED) {
-                    Long currentSettingId = mHin2nSp.getLong("current_setting_id", -1);
-                    if (currentSettingId == mSaveId) {
-                        new SweetAlertDialog(SettingDetailsActivity.this, SweetAlertDialog.WARNING_TYPE)
-                                .setTitleText(getString(R.string.dialog_update_request))
-                                .setCancelText(getString(R.string.dialog_no))
-                                .setConfirmText(getString(R.string.dialog_yes))
-                                .showCancelButton(true)
-                                .setCancelClickListener(new SweetAlertDialog.OnSweetClickListener() {
-                                    @Override
-                                    public void onClick(SweetAlertDialog sweetAlertDialog) {
-                                        sweetAlertDialog.cancel();
-                                    }
-                                })
-                                .setConfirmClickListener(new SweetAlertDialog.OnSweetClickListener() {
-                                    @Override
-                                    public void onClick(SweetAlertDialog sweetAlertDialog) {
-                                        N2NService.INSTANCE.stop(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                Intent vpnPrepareIntent = VpnService.prepare(SettingDetailsActivity.this);
-                                                if (vpnPrepareIntent != null) {
-                                                    startActivityForResult(vpnPrepareIntent, REQUECT_CODE_VPN);
-                                                } else {
-                                                    onActivityResult(REQUECT_CODE_VPN, RESULT_OK, null);
-                                                }
+            if (N2NService.INSTANCE != null &&
+                    N2NService.INSTANCE.getCurrentStatus() != EdgeStatus.RunningStatus.DISCONNECT &&
+                    N2NService.INSTANCE.getCurrentStatus() != EdgeStatus.RunningStatus.FAILED) {
+                Long currentSettingId = mHin2nSp.getLong("current_setting_id", -1);
+                if (currentSettingId == mSaveId) {
+                    new SweetAlertDialog(SettingDetailsActivity.this, SweetAlertDialog.WARNING_TYPE)
+                            .setTitleText(getString(R.string.dialog_update_request))
+                            .setCancelText(getString(R.string.dialog_no))
+                            .setConfirmText(getString(R.string.dialog_yes))
+                            .showCancelButton(true)
+                            .setCancelClickListener(new SweetAlertDialog.OnSweetClickListener() {
+                                @Override
+                                public void onClick(SweetAlertDialog sweetAlertDialog) {
+                                    sweetAlertDialog.cancel();
+                                }
+                            })
+                            .setConfirmClickListener(new SweetAlertDialog.OnSweetClickListener() {
+                                @Override
+                                public void onClick(SweetAlertDialog sweetAlertDialog) {
+                                    N2NService.INSTANCE.stop(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            Intent vpnPrepareIntent = VpnService.prepare(SettingDetailsActivity.this);
+                                            if (vpnPrepareIntent != null) {
+                                                startActivityForResult(vpnPrepareIntent, REQUECT_CODE_VPN);
+                                            } else {
+                                                onActivityResult(REQUECT_CODE_VPN, RESULT_OK, null);
                                             }
-                                        });
+                                        }
+                                    });
 
-                                        sweetAlertDialog.dismiss();
-                                    }
-                                })
-                                .show();
-                    } else {
-                        new SweetAlertDialog(this, SweetAlertDialog.SUCCESS_TYPE)
-                                .setTitleText(getString(R.string.dialog_save_succeed))
-                                .setConfirmClickListener(new SweetAlertDialog.OnSweetClickListener() {
-                                    @Override
-                                    public void onClick(SweetAlertDialog sweetAlertDialog) {
-                                        finish();
-                                        sweetAlertDialog.dismiss();
-                                    }
-                                }).show();
-                    }
+                                    sweetAlertDialog.dismiss();
+                                }
+                            })
+                            .show();
                 } else {
                     new SweetAlertDialog(this, SweetAlertDialog.SUCCESS_TYPE)
                             .setTitleText(getString(R.string.dialog_save_succeed))
@@ -543,9 +497,17 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
                                 }
                             }).show();
                 }
-                break;
-            default:
-                break;
+            } else {
+                new SweetAlertDialog(this, SweetAlertDialog.SUCCESS_TYPE)
+                        .setTitleText(getString(R.string.dialog_save_succeed))
+                        .setConfirmClickListener(new SweetAlertDialog.OnSweetClickListener() {
+                            @Override
+                            public void onClick(SweetAlertDialog sweetAlertDialog) {
+                                finish();
+                                sweetAlertDialog.dismiss();
+                            }
+                        }).show();
+            }
         }
     }
 
@@ -784,5 +746,25 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
                 .setTitleText("Oops...")
                 .setContentText("Something went wrong!")
                 .show();
+    }
+    private N2NSettingModel createN2NSettingModel(Long id, String settingName, boolean isSelected) {
+        return new N2NSettingModel(id, getN2nVersion(), settingName, mGetIpFromSupernodeCheckBox.isChecked() ? 1 : 0,
+                mIpAddressTIL.getEditText().getText().toString(), mNetMaskTIL.getEditText().getText().toString(),
+                mCommunityTIL.getEditText().getText().toString(), mEncryptTIL.getEditText().getText().toString(),
+                mDevDescTIL.getEditText().getText().toString(),
+                mSuperNodeTIL.getEditText().getText().toString(), mMoreSettingCheckBox.isChecked(),
+                mSuperNodeBackup.getEditText().getText().toString(), mMacAddr.getEditText().getText().toString(),
+                Integer.valueOf(mMtu.getEditText().getText().toString()), mLocalIpCheckBox.isChecked() ? "auto" : mLocalIP.getEditText().getText().toString(),
+                Integer.valueOf(mHolePunchInterval.getEditText().getText().toString()), mResoveSupernodeIPCheckBox.isChecked(),
+                Integer.valueOf(mLocalPort.getEditText().getText().toString()), mAllowRoutinCheckBox.isChecked(),
+                !mAcceptMuticastCheckBox.isChecked(), false,
+                mTraceLevelSpinner.getSelectedItemPosition(), isSelected,
+                mGatewayIp.getEditText().getText().toString(),
+                mSubnetIp.getEditText().getText().toString(),
+                mSubnetMask.getEditText().getText().toString(),
+                mDnsServer.getEditText().getText().toString(),
+                mEncryptionMode.getSelectedItem().toString(),
+                mHeaderEncCheckBox.isChecked(),
+                mCompressionMode.getSelectedItem().toString());
     }
 }

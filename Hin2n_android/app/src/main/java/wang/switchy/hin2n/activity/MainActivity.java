@@ -25,9 +25,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.orhanobut.logger.Logger;
 import com.tencent.bugly.beta.Beta;
-import com.yanzhenjie.permission.Action;
-import com.yanzhenjie.permission.AndPermission;
-import com.yanzhenjie.permission.runtime.Permission;
+import com.permissionx.guolindev.PermissionX;
+import android.Manifest;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
@@ -227,21 +226,15 @@ public class MainActivity extends BaseActivity {
                 Logger.d("shareItem onClick~");
 
                 if (Build.VERSION.SDK_INT >= 23) {
-                    AndPermission.with(MainActivity.this)
-                            .runtime()
-                            .permission(Permission.READ_EXTERNAL_STORAGE, Permission.ACCESS_FINE_LOCATION, Permission.READ_PHONE_STATE)
-                            .onGranted(new Action<List<String>>() {
-                                @Override
-                                public void onAction(List<String> data) {
+                    PermissionX.init(MainActivity.this)
+                            .permissions(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.READ_PHONE_STATE)
+                            .request((allGranted, grantedList, deniedList) -> {
+                                if (allGranted) {
                                     ShareUtils.doOnClickShareItem(MainActivity.this);
-                                }
-                            })
-                            .onDenied(new Action<List<String>>() {
-                                @Override
-                                public void onAction(List<String> data) {
+                                } else {
                                     Toast.makeText(MainActivity.this, "I NEED PERMISSIONS!", Toast.LENGTH_SHORT).show();
                                 }
-                            }).start();
+                            });
                 } else {
                     ShareUtils.doOnClickShareItem(MainActivity.this);
                 }

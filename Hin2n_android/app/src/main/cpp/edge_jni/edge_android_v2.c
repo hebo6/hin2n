@@ -540,6 +540,13 @@ int start_edge_v3(n2n_edge_status_t *status) {
         goto cleanup;
     }
 
+    #ifdef HAVE_LIBCRYPTO
+    traceEvent(TRACE_NORMAL, "using %s", OpenSSL_version(0));
+    #endif
+
+    traceEvent(TRACE_NORMAL, "using compression: %s.", compression_str(conf.compression));
+    traceEvent(TRACE_NORMAL, "using %s cipher.", transop_str(conf.transop_id));
+
     /* Protect the socket so that the supernode traffic won't go inside the n2n VPN */
     if (protect_socket(edge_get_management_socket(eee)) < 0) {
         traceEvent(TRACE_ERROR, "protect(management_socket) failed");

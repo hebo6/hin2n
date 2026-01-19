@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.net.VpnService;
+import android.content.pm.ServiceInfo;
 import android.os.*;
 
 import android.util.Log;
@@ -155,7 +156,7 @@ public class N2NService extends VpnService {
             manager.createNotificationChannel(notificationChannel);
 
             Intent i = new Intent(this, MainActivity.class);
-            PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, i, 0);
+            PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, i, PendingIntent.FLAG_IMMUTABLE);
             NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this,CHANNEL_ONE_ID)
                     .setTicker("Nature")
                     .setSmallIcon(R.mipmap.ic_launcher)
@@ -166,7 +167,11 @@ public class N2NService extends VpnService {
                     .setContentIntent(pendingIntent);
             Notification notification = notificationBuilder.build();
             notification.flags |= Notification.FLAG_NO_CLEAR;
-            startForeground(1, notification);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) { // API 34
+                 startForeground(1, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
+            } else {
+                 startForeground(1, notification);
+            }
         }
 
         N2NTileService.updateTileState(this);
@@ -317,7 +322,7 @@ public class N2NService extends VpnService {
                 break;
             case CMD_ADD_NOTIFICATION:
                 Intent mainIntent = new Intent(this, MainActivity.class);
-                PendingIntent mainPendingIntent = PendingIntent.getActivity(this, 0, mainIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+                PendingIntent mainPendingIntent = PendingIntent.getActivity(this, 0, mainIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
                 NotificationCompat.Builder builder = new NotificationCompat.Builder(this, getString(R.string.notification_channel_id_default))
                         .setSmallIcon(R.mipmap.ic_launcher)
@@ -339,7 +344,7 @@ public class N2NService extends VpnService {
                 break;
             case CMD_UPDATE_NOTIFICATION:
                 Intent mainIntent1 = new Intent(this, MainActivity.class);
-                PendingIntent mainPendingIntent1 = PendingIntent.getActivity(this, 0, mainIntent1, PendingIntent.FLAG_UPDATE_CURRENT);
+                PendingIntent mainPendingIntent1 = PendingIntent.getActivity(this, 0, mainIntent1, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
                 NotificationCompat.Builder builder2 = new NotificationCompat.Builder(this, getString(R.string.notification_channel_id_default))
                         .setSmallIcon(R.mipmap.ic_launcher)

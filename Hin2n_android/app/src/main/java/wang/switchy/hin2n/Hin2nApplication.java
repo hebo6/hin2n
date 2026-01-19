@@ -8,8 +8,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.os.Build;
 
 
-import androidx.multidex.MultiDexApplication;
-
 import wang.switchy.hin2n.storage.db.base.DaoMaster;
 import wang.switchy.hin2n.storage.db.base.DaoSession;
 import wang.switchy.hin2n.tool.N2nTools;
@@ -24,7 +22,7 @@ import com.umeng.socialize.PlatformConfig;
  * Created by janiszhang on 2018/4/19.
  */
 
-public class Hin2nApplication extends MultiDexApplication {
+public class Hin2nApplication extends android.app.Application {
 
     public Context AppContext;
 

@@ -117,7 +117,7 @@ public class N2NWidgetProvider extends AppWidgetProvider {
 
         Intent intent = new Intent(context, N2NWidgetProvider.class);
         intent.setAction(ACTION_WIDGET_CLICK);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         views.setOnClickPendingIntent(R.id.widget_image, pendingIntent);
 
         appWidgetManager.updateAppWidget(appWidgetId, views);
