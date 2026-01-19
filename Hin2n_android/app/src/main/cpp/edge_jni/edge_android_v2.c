@@ -397,247 +397,6 @@ void on_edge_sock_opened(n2n_edge_t *eee) {
 }
 
 /* *************************************************** */
-#ifndef N2N_V3
-int start_edge_v2(n2n_edge_status_t *status) {
-    int keep_on_running = 0;
-    char tuntap_dev_name[N2N_IFNAMSIZ] = "tun0";
-    char ip_mode[N2N_IF_MODE_SIZE] = "static";
-    char ip_addr[N2N_NETMASK_STR_SIZE] = "";
-    char netmask[N2N_NETMASK_STR_SIZE] = "255.255.255.0";
-    char device_mac[N2N_MACNAMSIZ] = "";
-    char *encrypt_key = NULL;
-    struct in_addr gateway_ip = {0};
-    struct in_addr tap_ip = {0};
-    n2n_edge_conf_t conf;
-    n2n_edge_t *eee = NULL;
-    n2n_edge_callbacks_t callbacks;
-    n2n_android_t private_status;
-    int i;
-    tuntap_dev dev;
-    uint8_t hex_mac[6];
-    int rv = 0;
-
-    if (!status) {
-        traceEvent(TRACE_ERROR, "Empty cmd struct");
-        return 1;
-    }
-    g_status = status;
-    n2n_edge_cmd_t *cmd = &status->cmd;
-
-    setTraceLevel(cmd->trace_vlevel);
-    FILE *fp = fopen(cmd->logpath, "a");
-    if (fp == NULL) {
-        traceEvent(TRACE_ERROR, "failed to open log file.");
-    } else {
-        setTraceFile(fp);
-    }
-
-    if (cmd->vpn_fd < 0) {
-        traceEvent(TRACE_ERROR, "VPN socket is invalid.");
-        return 1;
-    }
-
-    pthread_mutex_lock(&g_status->mutex);
-    g_status->running_status = EDGE_STAT_CONNECTING;
-    pthread_mutex_unlock(&g_status->mutex);
-    g_status->report_edge_status();
-
-    memset(&dev, 0, sizeof(dev));
-    edge_init_conf_defaults(&conf);
-
-    /* Load the configuration */
-    strncpy((char *) conf.community_name, cmd->community, N2N_COMMUNITY_SIZE - 1);
-
-    if (cmd->enc_key && cmd->enc_key[0]) {
-        conf.transop_id = N2N_TRANSFORM_ID_TWOFISH;
-        conf.encrypt_key = strdup(cmd->enc_key);
-        traceEvent(TRACE_DEBUG, "encrypt_key = '%s'\n", encrypt_key);
-
-        if (cmd->encryption_mode[0]) {
-            if (!strcmp(cmd->encryption_mode, "Twofish"))
-                conf.transop_id = N2N_TRANSFORM_ID_TWOFISH;
-            else if (!strcmp(cmd->encryption_mode, "AES-CBC"))
-                conf.transop_id = N2N_TRANSFORM_ID_AESCBC;
-            else if (!strcmp(cmd->encryption_mode, "Speck-CTR"))
-                conf.transop_id = N2N_TRANSFORM_ID_SPECK;
-            else if (!strcmp(cmd->encryption_mode, "ChaCha20"))
-                conf.transop_id = N2N_TRANSFORM_ID_CHACHA20;
-            else
-                traceEvent(TRACE_WARNING, "unknown encryption mode:'%s'\n", cmd->encryption_mode);
-        }
-    } else
-        conf.transop_id = N2N_TRANSFORM_ID_NULL;
-
-    scan_address(ip_addr, N2N_NETMASK_STR_SIZE,
-                 ip_mode, N2N_IF_MODE_SIZE,
-                 cmd->ip_addr);
-
-    dev.fd = cmd->vpn_fd;
-
-    conf.drop_multicast = cmd->drop_multicast == 0 ? 0 : 1;
-    conf.allow_routing = cmd->allow_routing == 0 ? 0 : 1;
-    conf.dyn_ip_mode = (strcmp("dhcp", ip_mode) == 0) ? 1 : 0;
-    conf.header_encryption = cmd->header_encryption == 0 ? 0 : 2;
-
-    for (i = 0; i < N2N_EDGE_NUM_SUPERNODES && i < EDGE_CMD_SUPERNODES_NUM; ++i) {
-        if (cmd->supernodes[i][0] != '\0') {
-            strncpy(conf.sn_ip_array[conf.sn_num], cmd->supernodes[i], N2N_EDGE_SN_HOST_SIZE);
-            traceEvent(TRACE_DEBUG, "Adding supernode[%u] = %s\n", (unsigned int) conf.sn_num,
-                       (conf.sn_ip_array[conf.sn_num]));
-            ++conf.sn_num;
-        }
-    }
-
-    if (cmd->ip_netmask[0] != '\0')
-        strncpy(netmask, cmd->ip_netmask, N2N_NETMASK_STR_SIZE);
-
-    if (cmd->gateway_ip[0] != '\0')
-        inet_aton(cmd->gateway_ip, &gateway_ip);
-
-    if (cmd->mac_addr[0] != '\0')
-        strncpy(device_mac, cmd->mac_addr, N2N_MACNAMSIZ);
-    else {
-        strncpy(device_mac, random_device_mac(), N2N_MACNAMSIZ);
-        traceEvent(TRACE_DEBUG, "random device mac: %s\n", device_mac);
-    }
-
-    str2mac(hex_mac, device_mac);
-
-    if (edge_verify_conf(&conf) != 0) {
-        if (conf.encrypt_key) free(conf.encrypt_key);
-        conf.encrypt_key = NULL;
-        traceEvent(TRACE_ERROR, "Bad configuration");
-        rv = 1;
-        goto cleanup;
-    }
-
-    /* Open the TAP device */
-    if (tuntap_open(&dev, tuntap_dev_name, ip_mode, ip_addr, netmask, device_mac, cmd->mtu) < 0) {
-        traceEvent(TRACE_ERROR, "Failed in tuntap_open");
-        rv = 1;
-        goto cleanup;
-    }
-
-    /* Start n2n */
-    eee = edge_init(&dev, &conf, &i);
-
-    if (eee == NULL) {
-        traceEvent(TRACE_ERROR, "Failed in edge_init");
-        rv = 1;
-        goto cleanup;
-    }
-
-    /* Protect the socket so that the supernode traffic won't go inside the n2n VPN */
-    if (protect_socket(edge_get_n2n_socket(eee)) < 0) {
-        traceEvent(TRACE_ERROR, "protect(n2n_socket) failed");
-        rv = 1;
-        goto cleanup;
-    }
-
-    if (protect_socket(edge_get_management_socket(eee)) < 0) {
-        traceEvent(TRACE_ERROR, "protect(management_socket) failed");
-        rv = 1;
-        goto cleanup;
-    }
-
-    /* Private Status */
-    memset(&private_status, 0, sizeof(private_status));
-    private_status.gateway_ip = gateway_ip.s_addr;
-    if (cmd->subnet_ip[0] != '\0')
-        private_status.subnet_ip = inet_addr(cmd->subnet_ip);
-    if (cmd->subnet_mask[0] != '\0')
-        private_status.subnet_mask = inet_addr(cmd->subnet_mask);
-    private_status.conf = &conf;
-    memcpy(private_status.tap_mac, hex_mac, 6);
-    inet_aton(ip_addr, &tap_ip);
-    private_status.tap_ipaddr = tap_ip.s_addr;
-    edge_set_userdata(eee, &private_status);
-
-    /* set host addr, netmask, mac addr for UIP and init arp*/
-    {
-        int match, i;
-        int ip[4];
-        uip_ipaddr_t ipaddr;
-        struct uip_eth_addr eaddr;
-
-        match = sscanf(ip_addr, "%d.%d.%d.%d", ip, ip + 1, ip + 2, ip + 3);
-        if (match != 4) {
-            traceEvent(TRACE_ERROR, "scan ip failed, ip: %s", ip_addr);
-            rv = 1;
-            goto cleanup;
-        }
-        uip_ipaddr(ipaddr, ip[0], ip[1], ip[2], ip[3]);
-        uip_sethostaddr(ipaddr);
-        match = sscanf(netmask, "%d.%d.%d.%d", ip, ip + 1, ip + 2, ip + 3);
-        if (match != 4) {
-            traceEvent(TRACE_ERROR, "scan netmask error, ip: %s", netmask);
-            rv = 1;
-            goto cleanup;
-        }
-        uip_ipaddr(ipaddr, ip[0], ip[1], ip[2], ip[3]);
-        uip_setnetmask(ipaddr);
-        for (i = 0; i < 6; ++i)
-            eaddr.addr[i] = hex_mac[i];
-        uip_setethaddr(eaddr);
-
-        uip_arp_init();
-    }
-
-    /* Set up the callbacks */
-    memset(&callbacks, 0, sizeof(callbacks));
-    callbacks.sn_registration_updated = on_sn_registration_updated;
-    callbacks.packet_from_peer = on_packet_from_peer;
-    callbacks.packet_from_tap = on_packet_from_tap;
-    callbacks.main_loop_period = on_main_loop_period;
-    edge_set_callbacks(eee, &callbacks);
-
-    keep_on_running = 1;
-    pthread_mutex_lock(&g_status->mutex);
-    g_status->running_status = EDGE_STAT_CONNECTED;
-    pthread_mutex_unlock(&g_status->mutex);
-    g_status->report_edge_status();
-    traceEvent(TRACE_NORMAL, "edge started");
-
-    run_edge_loop(eee, &keep_on_running);
-
-    traceEvent(TRACE_NORMAL, "edge stopped");
-
-    cleanup:
-    if (eee) edge_term(eee);
-    if (encrypt_key) free(encrypt_key);
-    tuntap_close(&dev);
-    edge_term_conf(&conf);
-
-    return rv;
-}
-
-/* *************************************************** */
-
-int stop_edge_v2(void) {
-    // quick stop
-    int fd = open_socket(0, 0 /* bind LOOPBACK*/ );
-    if (fd < 0) {
-        return 1;
-    }
-
-    struct sockaddr_in peer_addr;
-    peer_addr.sin_family = PF_INET;
-    peer_addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-    peer_addr.sin_port = htons(N2N_EDGE_MGMT_PORT);
-    sendto(fd, "stop", 4, 0, (struct sockaddr *) &peer_addr, sizeof(struct sockaddr_in));
-    close(fd);
-
-    // Do not report the status yet, the edge thread may be still running
-    /*
-    pthread_mutex_lock(&g_status->mutex);
-    g_status->running_status = EDGE_STAT_DISCONNECT;
-    pthread_mutex_unlock(&g_status->mutex);
-    g_status->report_edge_status();
-     */
-
-    return 0;
-}
-#else
 
 int g_stop_initial = 0;
 
@@ -707,6 +466,16 @@ int start_edge_v3(n2n_edge_status_t *status) {
         }
     } else
         conf.transop_id = N2N_TRANSFORM_ID_NULL;
+
+    if (cmd->compression_mode[0]) {
+        if (!strcmp(cmd->compression_mode, "LZO"))
+            conf.compression = N2N_COMPRESSION_ID_LZO;
+        else if (!strcmp(cmd->compression_mode, "ZSTD"))
+            conf.compression = N2N_COMPRESSION_ID_ZSTD;
+        else
+            conf.compression = N2N_COMPRESSION_ID_NONE;
+    } else
+        conf.compression = N2N_COMPRESSION_ID_NONE;
 
     if(cmd->ip_mode == 0)
         scan_address(ip_addr, N2N_NETMASK_STR_SIZE,
@@ -1145,5 +914,3 @@ int stop_edge_v3(void) {
 
     return 0;
 }
-
-#endif

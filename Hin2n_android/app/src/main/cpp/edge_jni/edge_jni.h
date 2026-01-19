@@ -59,10 +59,7 @@ enum
 enum
 {
     EDGE_TYPE_NONE = -1,
-    EDGE_TYPE_V1,
-    EDGE_TYPE_V2,
-    EDGE_TYPE_V2S,
-    EDGE_TYPE_V3
+    EDGE_TYPE_V3 = 3
 };
 
 typedef struct n2n_edge_status_st {
@@ -83,12 +80,6 @@ typedef struct n2n_edge_status_st {
 
 extern n2n_edge_status_t* g_status;
 
-extern int start_edge_v1(n2n_edge_status_t* status);
-extern int stop_edge_v1(void);
-extern int start_edge_v2(n2n_edge_status_t* status);
-extern int stop_edge_v2(void);
-extern int start_edge_v2s(n2n_edge_status_t* status);
-extern int stop_edge_v2s(void);
 extern int start_edge_v3(n2n_edge_status_t* status);
 extern int stop_edge_v3(void);
 extern void report_edge_status(void);

@@ -36,12 +36,6 @@ public class Hin2nApplication extends MultiDexApplication {
     static {
         System.loadLibrary("slog");
         System.loadLibrary("uip");
-        System.loadLibrary("n2n_v2s");
-        // n2n_v2 is part of edge_v2 due to dependency on the g_status
-        System.loadLibrary("n2n_v1");
-        System.loadLibrary("edge_v2s");
-        System.loadLibrary("edge_v2");
-        System.loadLibrary("edge_v1");
         System.loadLibrary("edge_jni");
     }
 

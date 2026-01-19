@@ -90,12 +90,7 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
     private long mSaveId;
     private ArrayList<String> mTraceLevelList;
     private CheckBox mLocalIpCheckBox;
-    private RadioGroup mVersionGroup;
-    private CheckBox mUseHttpTunnelCheckBox;
-    private RadioButton mVersionV1;
-    private RadioButton mVersionV2;
-    private RadioButton mVersionV2s;
-    private RadioButton mVersionV3;
+    // Version selector removed - only v3 is supported
     private TextInputLayout mGatewayIp;
     private TextInputLayout mSubnetIp;
     private TextInputLayout mSubnetMask;
@@ -103,6 +98,8 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
     private LinearLayout mEncryptionBox;
     private Spinner mEncryptionMode;
     private CheckBox mHeaderEncCheckBox;
+    private LinearLayout mCompressionBox;
+    private Spinner mCompressionMode;
 
     @Override
     protected BaseTemplate createTemplate() {
@@ -132,23 +129,8 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
 
         mSettingName = (TextInputLayout) findViewById(R.id.til_setting_name);
 
-        mVersionGroup = (RadioGroup) findViewById(R.id.rg_version);
-        mVersionGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(RadioGroup radioGroup, int checkedId) {
-                if (type == TYPE_SETTING_ADD) {
-                    if (checkedId == R.id.rb_v3)
-                        mEncryptionMode.setSelection(1);
-                    else
-                        mEncryptionMode.setSelection(0);
-                }
-                updateVersionGroupCheck(checkedId);
-            }
-        });
-        mVersionV1 = (RadioButton) findViewById(R.id.rb_v1);
-        mVersionV2 = (RadioButton) findViewById(R.id.rb_v2);
-        mVersionV2s = (RadioButton) findViewById(R.id.rb_v2s);
-        mVersionV3 = (RadioButton) findViewById(R.id.rb_v3);
+        // Only v3 is supported now
+
 
         mIpAddressTIL = (TextInputLayout) findViewById(R.id.til_ip_address);
         mNetMaskTIL = (TextInputLayout) findViewById(R.id.til_net_mask);
@@ -213,7 +195,6 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
         mAllowRoutinCheckBox = (CheckBox) findViewById(R.id.allow_routing_check_box);
         mAcceptMuticastView = (RelativeLayout) findViewById(R.id.rl_drop_muticast);
         mAcceptMuticastCheckBox = (CheckBox) findViewById(R.id.accept_muticast_check_box);
-        mUseHttpTunnelCheckBox = (CheckBox) findViewById(R.id.use_http_tunnel_check_box);
         mGatewayIp = (TextInputLayout) findViewById(R.id.til_gateway_ip);
         mSubnetIp = (TextInputLayout) findViewById(R.id.til_subnet_ip);
         mSubnetMask = (TextInputLayout) findViewById(R.id.til_subnet_mask);
@@ -226,6 +207,13 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
                 android.R.layout.simple_spinner_item);
         encAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         mEncryptionMode.setAdapter(encAdapter);
+
+        mCompressionBox = (LinearLayout) findViewById(R.id.ll_n2n_compression);
+        mCompressionMode = (Spinner) findViewById(R.id.til_compression_mode);
+        ArrayAdapter<CharSequence> compAdapter = ArrayAdapter.createFromResource(this, R.array.compression_modes,
+                android.R.layout.simple_spinner_item);
+        compAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        mCompressionMode.setAdapter(compAdapter);
 
         mTraceLevelSpinner = (Spinner) findViewById(R.id.spinner_trace_level);
 
@@ -265,8 +253,8 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
             //新增配置，需要设置默认值的设置默认值
             ((CommonTitleTemplate) mTemplate).setTitleText(R.string.title_add_setting);
             mSettingName.getEditText().setText(R.string.item_default_name);
-            mVersionV2.setChecked(true);
-            mSuperNodeTIL.getEditText().setText(R.string.item_default_supernode_v2);
+            // v3 is the only version now
+            mSuperNodeTIL.getEditText().setText(R.string.item_default_supernode_v3);
             mCommunityTIL.getEditText().setText(R.string.item_default_community);
             mEncryptTIL.getEditText().setText(R.string.item_default_password);
             mIpAddressTIL.getEditText().setText(R.string.item_default_ip);
@@ -281,14 +269,12 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
             mResoveSupernodeIPCheckBox.setChecked(Boolean.valueOf(getString(R.string.item_default_resovesupernodeip)));
             mAllowRoutinCheckBox.setChecked(Boolean.valueOf(getString(R.string.item_default_allowrouting)));
             mAcceptMuticastCheckBox.setChecked(!Boolean.valueOf(getString(R.string.item_default_dropmuticast)));
-            mUseHttpTunnelCheckBox.setChecked(Boolean.valueOf(getString(R.string.item_default_usehttptunnel)));
             mTraceLevelSpinner.setSelection(Integer.valueOf(getString(R.string.item_default_tracelevel)) - 1);
             mMoreSettingCheckBox.setChecked(false);
             mGatewayIp.getEditText().setText(R.string.item_default_gateway_ip);
-//            mSubnetIp.getEditText().setText(R.string.item_default_subnet_ip);
-//            mSubnetMask.getEditText().setText(R.string.item_default_subnet_mask);
             mDnsServer.getEditText().setText("");
-            mEncryptionMode.setSelection(encAdapter.getPosition("Twofish"));
+            mEncryptionMode.setSelection(encAdapter.getPosition("AES-CBC")); // v3 default
+            mCompressionMode.setSelection(compAdapter.getPosition("None"));
             mHeaderEncCheckBox.setChecked(Boolean.valueOf(getString(R.string.item_default_headerenc)));
 
             mDevDescTIL.getEditText().setText("");
@@ -301,21 +287,7 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
             mSaveId = intent.getLongExtra("saveId", 0);
             mN2NSettingModel = Hin2nApplication.getInstance().getDaoSession().getN2NSettingModelDao().load(mSaveId);
             mSettingName.getEditText().setText(mN2NSettingModel.getName());
-            switch (mN2NSettingModel.getVersion()) {
-                case 0:
-                    mVersionV1.setChecked(true);
-                    break;
-                case 1:
-                    mVersionV2.setChecked(true);
-                    break;
-                case 2:
-                    mVersionV2s.setChecked(true);
-                    break;
-                case 3:
-                    mVersionV3.setChecked(true);
-                default:
-                    break;
-            }
+            // Version field ignored - always v3 now
             mGetIpFromSupernodeCheckBox.setChecked(mN2NSettingModel.getIpMode() == 1);
             mIpAddressTIL.getEditText().setText(mN2NSettingModel.getIp());
             mNetMaskTIL.getEditText().setText(mN2NSettingModel.getNetmask());
@@ -328,6 +300,9 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
             mSubnetMask.getEditText().setText(mN2NSettingModel.getSubnetMask());
             mDnsServer.getEditText().setText(mN2NSettingModel.getDnsServer());
             mEncryptionMode.setSelection(encAdapter.getPosition(mN2NSettingModel.getEncryptionMode()));
+            String compressionMode = mN2NSettingModel.getCompressionMode();
+            if (compressionMode == null) compressionMode = "None";
+            mCompressionMode.setSelection(compAdapter.getPosition(compressionMode));
 
             mSuperNodeBackup.getEditText().setText(mN2NSettingModel.getSuperNodeBackup());
             mMacAddr.getEditText().setText(mN2NSettingModel.getMacAddr());
@@ -346,7 +321,6 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
             mAllowRoutinCheckBox.setChecked(mN2NSettingModel.getAllowRouting());
             mHeaderEncCheckBox.setChecked(mN2NSettingModel.getHeaderEnc());
             mAcceptMuticastCheckBox.setChecked(!mN2NSettingModel.getDropMuticast());
-            mUseHttpTunnelCheckBox.setChecked(mN2NSettingModel.getUseHttpTunnel());
             mTraceLevelSpinner.setSelection(Integer.valueOf(mN2NSettingModel.getTraceLevel()));
             mMoreSettingCheckBox.setChecked(false);
 
@@ -354,7 +328,8 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
             mSaveBtn.setVisibility(View.GONE);
         }
 
-        updateVersionGroupCheck(mVersionGroup.getCheckedRadioButtonId());
+        // Initialize UI for v3 (only version supported)
+        initializeV3UI();
     }
 
     @Override
@@ -377,105 +352,36 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
         }
     }
 
-    private void updateVersionGroupCheck(int checkedId) {
-        switch (checkedId) {
-            case R.id.rb_v1:
-                mUseHttpTunnelCheckBox.setVisibility(View.GONE);
-                mGetIpFromSupernodeView.setVisibility(View.GONE);
-                mGetIpFromSupernodeCheckBox.setChecked(false);
-                mDevDescTIL.setVisibility(View.GONE);
-                mSuperNodeBackup.setVisibility(View.GONE);
-                mAcceptMuticastView.setVisibility(View.GONE);
-                mHolePunchInterval.setVisibility(View.GONE);
-                mLocalIP.setVisibility(View.GONE);
-                mLocalIpCheckBox.setVisibility(View.GONE);
-                mGatewayIp.setVisibility(View.GONE);
-                mSubnetIp.setVisibility(View.GONE);
-                mSubnetMask.setVisibility(View.GONE);
-                mDnsServer.setVisibility(View.GONE);
-                mResolveSnLayout.setVisibility(View.VISIBLE);
-                mEncryptionBox.setVisibility(View.GONE);
-                mHeaderEncCheckBox.setVisibility(View.GONE);
-                if (isDefaultSupernode(mSuperNodeTIL.getEditText().getText().toString())) {
-                    mSuperNodeTIL.getEditText().setText(R.string.item_default_supernode_v1);
-                }
-                break;
-            case R.id.rb_v2:
-                mUseHttpTunnelCheckBox.setVisibility(View.GONE);
-                mGetIpFromSupernodeView.setVisibility(View.GONE);
-                mGetIpFromSupernodeCheckBox.setChecked(false);
-                mDevDescTIL.setVisibility(View.GONE);
-                mSuperNodeBackup.setVisibility(View.VISIBLE);
-                mAcceptMuticastView.setVisibility(View.VISIBLE);
-                mHolePunchInterval.setVisibility(View.GONE);
-                mLocalIP.setVisibility(View.GONE);
-                mLocalIpCheckBox.setVisibility(View.GONE);
-                mGatewayIp.setVisibility(View.VISIBLE);
-                mSubnetIp.setVisibility(View.VISIBLE);
-                mSubnetMask.setVisibility(View.VISIBLE);
-                mDnsServer.setVisibility(View.VISIBLE);
-                mResolveSnLayout.setVisibility(View.GONE);
-                mEncryptionBox.setVisibility(View.VISIBLE);
-                mHeaderEncCheckBox.setVisibility(View.VISIBLE);
-                if (isDefaultSupernode(mSuperNodeTIL.getEditText().getText().toString())) {
-                    mSuperNodeTIL.getEditText().setText(R.string.item_default_supernode_v2);
-                }
-                break;
-            case R.id.rb_v2s:
-                mUseHttpTunnelCheckBox.setVisibility(View.GONE);
-                mDevDescTIL.setVisibility(View.GONE);
-                mGetIpFromSupernodeView.setVisibility(View.GONE);
-                mGetIpFromSupernodeCheckBox.setChecked(false);
-                mSuperNodeBackup.setVisibility(View.VISIBLE);
-                mAcceptMuticastView.setVisibility(View.VISIBLE);
-                mHolePunchInterval.setVisibility(View.VISIBLE);
-                mLocalIP.setVisibility(View.VISIBLE);
-                mLocalIpCheckBox.setVisibility(View.VISIBLE);
-                mGatewayIp.setVisibility(View.GONE);
-                mSubnetIp.setVisibility(View.GONE);
-                mSubnetMask.setVisibility(View.GONE);
-                mDnsServer.setVisibility(View.GONE);
-                mResolveSnLayout.setVisibility(View.VISIBLE);
-                mEncryptionBox.setVisibility(View.GONE);
-                mHeaderEncCheckBox.setVisibility(View.GONE);
-                if (isDefaultSupernode(mSuperNodeTIL.getEditText().getText().toString())) {
-                    mSuperNodeTIL.getEditText().setText(R.string.item_default_supernode_v2s);
-                }
-                break;
-            case R.id.rb_v3:
-                mUseHttpTunnelCheckBox.setVisibility(View.GONE);
-                mDevDescTIL.setVisibility(View.VISIBLE);
-                mGetIpFromSupernodeView.setVisibility(View.VISIBLE);
-                boolean bGetIpFromSupernodeChecked = false;
-                if(mN2NSettingModel != null)
-                    bGetIpFromSupernodeChecked = mN2NSettingModel.getIpMode() == 1;
-                mGetIpFromSupernodeCheckBox.setChecked(bGetIpFromSupernodeChecked);
-                mSuperNodeBackup.setVisibility(View.VISIBLE);
-                mAcceptMuticastView.setVisibility(View.VISIBLE);
-                mHolePunchInterval.setVisibility(View.GONE);
-                mLocalIP.setVisibility(View.GONE);
-                mLocalIpCheckBox.setVisibility(View.GONE);
-                mGatewayIp.setVisibility(View.VISIBLE);
-                mSubnetIp.setVisibility(View.VISIBLE);
-                mSubnetMask.setVisibility(View.VISIBLE);
-                mDnsServer.setVisibility(View.VISIBLE);
-                mResolveSnLayout.setVisibility(View.GONE);
-                mEncryptionBox.setVisibility(View.VISIBLE);
-                mHeaderEncCheckBox.setVisibility(View.VISIBLE);
-                if (isDefaultSupernode(mSuperNodeTIL.getEditText().getText().toString())) {
-                    mSuperNodeTIL.getEditText().setText(R.string.item_default_supernode_v3);
-                }
-                break;
-            default:
-                break;
-        }
+    /**
+     * Initialize UI for n2n v3 (only version supported)
+     */
+    private void initializeV3UI() {
+        // v3 UI configuration
+        mDevDescTIL.setVisibility(View.VISIBLE);
+        mGetIpFromSupernodeView.setVisibility(View.VISIBLE);
+        boolean bGetIpFromSupernodeChecked = false;
+        if(mN2NSettingModel != null)
+            bGetIpFromSupernodeChecked = mN2NSettingModel.getIpMode() == 1;
+        mGetIpFromSupernodeCheckBox.setChecked(bGetIpFromSupernodeChecked);
+        mSuperNodeBackup.setVisibility(View.VISIBLE);
+        mAcceptMuticastView.setVisibility(View.VISIBLE);
+        mHolePunchInterval.setVisibility(View.GONE);
+        mLocalIP.setVisibility(View.GONE);
+        mLocalIpCheckBox.setVisibility(View.GONE);
+        mGatewayIp.setVisibility(View.VISIBLE);
+        mSubnetIp.setVisibility(View.VISIBLE);
+        mSubnetMask.setVisibility(View.VISIBLE);
+        mDnsServer.setVisibility(View.VISIBLE);
+        mResolveSnLayout.setVisibility(View.GONE);
+        mEncryptionBox.setVisibility(View.VISIBLE);
+        mCompressionBox.setVisibility(View.VISIBLE);
+        mHeaderEncCheckBox.setVisibility(View.VISIBLE);
+        
+
     }
 
     private Boolean isDefaultSupernode(String supernode) {
         if (supernode == null || supernode.isEmpty() ||
-                supernode.equals(getString(R.string.item_default_supernode_v1)) ||
-                supernode.equals(getString(R.string.item_default_supernode_v2)) ||
-                supernode.equals(getString(R.string.item_default_supernode_v2s)) ||
                 supernode.equals(getString(R.string.item_default_supernode_v3))) {
             return true;
         }
@@ -513,14 +419,15 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
                         Integer.valueOf(mMtu.getEditText().getText().toString()), mLocalIpCheckBox.isChecked() ? "auto" : mLocalIP.getEditText().getText().toString(),
                         Integer.valueOf(mHolePunchInterval.getEditText().getText().toString()), mResoveSupernodeIPCheckBox.isChecked(),
                         Integer.valueOf(mLocalPort.getEditText().getText().toString()), mAllowRoutinCheckBox.isChecked(),
-                        !mAcceptMuticastCheckBox.isChecked(), mUseHttpTunnelCheckBox.isChecked(),
+                        !mAcceptMuticastCheckBox.isChecked(), false,
                         mTraceLevelSpinner.getSelectedItemPosition(), !hasSelected,
                         mGatewayIp.getEditText().getText().toString(),
                         mSubnetIp.getEditText().getText().toString(),
                         mSubnetMask.getEditText().getText().toString(),
                         mDnsServer.getEditText().getText().toString(),
                         mEncryptionMode.getSelectedItem().toString(),
-                        mHeaderEncCheckBox.isChecked());
+                        mHeaderEncCheckBox.isChecked(),
+                        mCompressionMode.getSelectedItem().toString());
                 n2NSettingModelDao.insert(mN2NSettingModel);
 
                 if (!hasSelected) {
@@ -568,14 +475,15 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
                         Integer.valueOf(mMtu.getEditText().getText().toString()), mLocalIpCheckBox.isChecked() ? "auto" : mLocalIP.getEditText().getText().toString(),
                         Integer.valueOf(mHolePunchInterval.getEditText().getText().toString()), mResoveSupernodeIPCheckBox.isChecked(),
                         Integer.valueOf(mLocalPort.getEditText().getText().toString()), mAllowRoutinCheckBox.isChecked(),
-                        !mAcceptMuticastCheckBox.isChecked(), mUseHttpTunnelCheckBox.isChecked(),
+                        !mAcceptMuticastCheckBox.isChecked(), false,
                         mTraceLevelSpinner.getSelectedItemPosition(), mN2NSettingModel.getIsSelcected(),
                         mGatewayIp.getEditText().getText().toString(),
                         mSubnetIp.getEditText().getText().toString(),
                         mSubnetMask.getEditText().getText().toString(),
                         mDnsServer.getEditText().getText().toString(),
                         mEncryptionMode.getSelectedItem().toString(),
-                        mHeaderEncCheckBox.isChecked());
+                        mHeaderEncCheckBox.isChecked(),
+                        mCompressionMode.getSelectedItem().toString());
                 n2NSettingModelDao1.update(mN2NSettingModel);
 
                 if (N2NService.INSTANCE != null &&
@@ -849,18 +757,8 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
     }
 
     private int getN2nVersion() {
-        switch (mVersionGroup.getCheckedRadioButtonId()) {
-            case R.id.rb_v1:
-                return 0;
-            case R.id.rb_v2:
-                return 1;
-            case R.id.rb_v2s:
-                return 2;
-            case R.id.rb_v3:
-                return 3;
-            default:
-                return -1;
-        }
+        // Only v3 is supported now
+        return 3;
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)

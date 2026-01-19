@@ -4,7 +4,7 @@ import java.util.Random;
 import java.util.Vector;
 
 public class EdgeCmd {
-    public int edgeType;    // 0: v1, 1: v2, 2: v2s 3: v3
+    public int edgeType;    // Always 3 (v3) - legacy versions removed
     public int ipMode;
     public String ipAddr;
     public String ipNetmask;

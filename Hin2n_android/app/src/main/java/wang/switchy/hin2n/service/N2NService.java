@@ -91,7 +91,7 @@ public class N2NService extends VpnService {
             builder.addDnsServer(mN2nSettingInfo.getDnsServer());
         }
 
-        String session = getResources().getStringArray(R.array.vpn_session_name)[mN2nSettingInfo.getVersion()];
+        String session = getResources().getStringArray(R.array.vpn_session_name)[0]; // Always v3
         try {
             mParcelFileDescriptor = builder.setSession(session).establish();
         } catch (IllegalArgumentException e) {
@@ -128,7 +128,7 @@ public class N2NService extends VpnService {
             }
         }
 
-        String session = getResources().getStringArray(R.array.vpn_session_name)[mN2nSettingInfo.getVersion()];
+        String session = getResources().getStringArray(R.array.vpn_session_name)[0]; // Always v3
         cmd = new EdgeCmd(mN2nSettingInfo, vpnServiceFd, getExternalFilesDir("log") + "/" + session + ".log");
         mFileObserver = new LogFileObserver(cmd.logPath);
         mFileObserver.stopWatching();
