@@ -16,12 +16,8 @@ else(${UIP_CONF_BYTE_ORDER} EQUAL 1)
 set(UIP_CONF_BYTE_ORDER UIP_LITTLE_ENDIAN)
 endif(${UIP_CONF_BYTE_ORDER} EQUAL 1)
 
-# OpenSSL
-SET(OPENSSL_ROOT_DIR src/main/jniLibs/${ANDROID_ABI})
-SET(OPENSSL_LIBRARIES_DIR "${OPENSSL_ROOT_DIR}")
-SET(OPENSSL_INCLUDE_DIR ${OPENSSL_ROOT_DIR}/include)
-SET(OPENSSL_LIBRARIES "crypto")
-LINK_DIRECTORIES(${OPENSSL_LIBRARIES_DIR})
+# OpenSSL (via Prefab)
+find_package(openssl REQUIRED CONFIG)
 OPTION(N2N_OPTION_OPENSSL "Enable OpenSSL support" ON)
 set(N2N_OPTION_OPENSSL ON)
 
@@ -51,7 +47,7 @@ include_directories(src/main/cpp src/main/cpp/edge_jni src/main/cpp/slog src/mai
 add_library(edge_jni SHARED src/main/cpp/edge_jni/edge_jni.c)
 target_link_libraries(edge_jni edge_v3)
 target_link_libraries(edge_jni slog)
-target_link_libraries(edge_jni ${OPENSSL_LIBRARIES})
+target_link_libraries(edge_jni openssl::crypto)
 
 
 # Configure n2n_v3 config.h
@@ -132,10 +128,9 @@ target_compile_options(edge_v3 PRIVATE
 )
 target_include_directories(edge_v3 PUBLIC
         src/main/cpp/n2n_v3/include
-        ${OPENSSL_INCLUDE_DIR}
         )
 target_link_libraries(edge_v3 uip)
-target_link_libraries(edge_v3 ${OPENSSL_LIBRARIES})
+target_link_libraries(edge_v3 openssl::crypto)
 target_link_libraries(edge_v3 ${ZSTD_LIBRARIES})
 
 
