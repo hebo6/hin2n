@@ -40,9 +40,6 @@ public class N2NSettingModel /*implements Parcelable*/ {
     boolean useHttpTunnel;
     int traceLevel;
     boolean isSelcected;
-    String gatewayIp;
-    String subnetIp;
-    String subnetMask;
     String dnsServer;
     String encryptionMode;
     boolean headerEnc;
@@ -217,36 +214,12 @@ public class N2NSettingModel /*implements Parcelable*/ {
         this.useHttpTunnel = useHttpTunnel;
     }
 
-    public String getGatewayIp() {
-        return this.gatewayIp;
-    }
-
-    public String getSubnetIp() {
-        return this.subnetIp;
-    }
-
-    public String getSubnetMask() {
-        return this.subnetMask;
-    }
-
     public String getDnsServer() {
         return this.dnsServer;
     }
 
     public String getEncryptionMode() {
         return this.encryptionMode;
-    }
-
-    public void setGatewayIp(String gatewayIp) {
-        this.gatewayIp = gatewayIp;
-    }
-
-    public void setSubnetIp(String subnetIp) {
-        this.subnetIp = subnetIp;
-    }
-
-    public void setSubnetMask(String subnetMask) {
-        this.subnetIp = subnetMask;
     }
 
     public void setDnsServer(String dnsServer) {
@@ -274,8 +247,8 @@ public class N2NSettingModel /*implements Parcelable*/ {
     @Generated(hash = 2015267734)
     public N2NSettingModel(Long id, int version, String name, int ipMode, String ip, String netmask, String community, String password, String devDesc, String superNode,
             boolean moreSettings, String superNodeBackup, String macAddr, int mtu, String localIP, int holePunchInterval, boolean resoveSupernodeIP, int localPort,
-            boolean allowRouting, boolean dropMuticast, boolean useHttpTunnel, int traceLevel, boolean isSelcected, String gatewayIp, String subnetIp, String subnetMask,
-            String dnsServer, String encryptionMode, boolean headerEnc, String compressionMode) {
+            boolean allowRouting, boolean dropMuticast, boolean useHttpTunnel, int traceLevel, boolean isSelcected, String dnsServer, String encryptionMode,
+            boolean headerEnc, String compressionMode) {
         this.id = id;
         this.version = version;
         this.name = name;
@@ -299,9 +272,6 @@ public class N2NSettingModel /*implements Parcelable*/ {
         this.useHttpTunnel = useHttpTunnel;
         this.traceLevel = traceLevel;
         this.isSelcected = isSelcected;
-        this.gatewayIp = gatewayIp;
-        this.subnetIp = subnetIp;
-        this.subnetMask = subnetMask;
         this.dnsServer = dnsServer;
         this.encryptionMode = encryptionMode;
         this.headerEnc = headerEnc;
@@ -346,9 +316,6 @@ public class N2NSettingModel /*implements Parcelable*/ {
                 ", useHttpTunnel=" + useHttpTunnel +
                 ", traceLevel=" + traceLevel +
                 ", isSelcected=" + isSelcected +
-                ", gatewayIp=" + gatewayIp +
-                ", subnetIp=" + subnetIp +
-                ", subnetMask=" + subnetMask +
                 ", dnsServer=" + dnsServer +
                 ", encryptionMode =" + encryptionMode +
                 ", headerEnc =" + headerEnc +

@@ -101,7 +101,9 @@ public class N2NTileService extends TileService {
 
         Intent intent = new Intent(this, N2NService.class);
         Bundle bundle = new Bundle();
-        N2NSettingInfo n2NSettingInfo = new N2NSettingInfo(settingModel);
+        N2NSettingInfo n2NSettingInfo = Hin2nApplication.getInstance()
+                .getSettingRepository()
+                .toSettingInfo(settingModel);
         bundle.putParcelable("n2nSettingInfo", n2NSettingInfo);
         intent.putExtra("Setting", bundle);
 

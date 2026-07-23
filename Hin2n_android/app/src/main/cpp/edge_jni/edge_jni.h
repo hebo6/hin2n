@@ -9,6 +9,8 @@
 
 #include <jni.h>
 #include <pthread.h>
+#include <stddef.h>
+#include <stdint.h>
 
 #define EDGE_CMD_IPSTR_SIZE 16
 #define EDGE_CMD_SUPERNODES_NUM 2
@@ -18,6 +20,13 @@
 #define EDGE_CMD_HOLEPUNCH_INTERVAL 25
 #define EDGE_CMD_ENCRYPTION_MODE_SIZE 16
 #define EDGE_CMD_COMPRESSION_MODE_SIZE 32
+#define EDGE_CMD_MAX_ROUTES 256
+
+typedef struct {
+    char network[EDGE_CMD_IPSTR_SIZE];
+    uint8_t prefix_length;
+    char gateway_ip[EDGE_CMD_IPSTR_SIZE];
+} n2n_edge_route_t;
 
 typedef struct n2n_edge_cmd_st
 {
@@ -31,7 +40,8 @@ typedef struct n2n_edge_cmd_st
     char mac_addr[EDGE_CMD_MACNAMSIZ];
     unsigned int mtu;
     char local_ip[EDGE_CMD_IPSTR_SIZE];
-    char gateway_ip[EDGE_CMD_IPSTR_SIZE];
+    n2n_edge_route_t *routes;
+    size_t route_count;
     char encryption_mode[EDGE_CMD_ENCRYPTION_MODE_SIZE];
     unsigned int holepunch_interval;
     int re_resolve_supernode_ip;
@@ -44,8 +54,6 @@ typedef struct n2n_edge_cmd_st
     char* logpath;
     char* devDesc;
     int header_encryption;
-    char subnet_ip[EDGE_CMD_IPSTR_SIZE];
-    char subnet_mask[EDGE_CMD_IPSTR_SIZE];
     char compression_mode[EDGE_CMD_COMPRESSION_MODE_SIZE];
 } n2n_edge_cmd_t;
 

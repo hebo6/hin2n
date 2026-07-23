@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingTop="4dp"
+    android:paddingBottom="4dp">
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/til_route_destination"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/route_destination">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/tie_route_destination"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textNoSuggestions"
+            android:singleLine="true" />
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/til_route_gateway"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/route_gateway">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/tie_route_gateway"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textNoSuggestions"
+            android:singleLine="true" />
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <Button
+        android:id="@+id/btn_remove_subnet_route"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end"
+        android:text="@string/remove_subnet_route" />
+
+</LinearLayout>

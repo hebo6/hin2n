@@ -3,6 +3,7 @@
 //
 
 #include <android/log.h>
+#include <arpa/inet.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
@@ -372,21 +373,95 @@ int GetEdgeCmd(JNIEnv *env, jobject jcmd, n2n_edge_cmd_t *cmd) {
                             cmd->drop_multicast);
 #endif /* #ifndef NDEBUG */
     }
-    // gatewayIp
+    // subnetRoutes
     {
-        jstring jbGatewayIp = (*env)->GetObjectField(env, jcmd, (*env)->GetFieldID(env, cls, "gatewayIp",
-                                                                                "Ljava/lang/String;"));
-        JNI_CHECKNULL(jbGatewayIp);
-        const char *ipAddr = (*env)->GetStringUTFChars(env, jbGatewayIp, NULL);
-        if (!ipAddr) {
-            (*env)->ReleaseStringUTFChars(env, jbGatewayIp, ipAddr);
+        jobjectArray route_array = (*env)->GetObjectField(
+                env, jcmd,
+                (*env)->GetFieldID(env, cls, "subnetRoutes",
+                                   "[Lwang/switchy/hin2n/model/SubnetRoute;"));
+        JNI_CHECKNULL(route_array);
+
+        jsize route_count = (*env)->GetArrayLength(env, route_array);
+        if (route_count < 0 || route_count > EDGE_CMD_MAX_ROUTES) {
             return 1;
         }
-        strncpy(cmd->gateway_ip, ipAddr, EDGE_CMD_IPSTR_SIZE);
-        (*env)->ReleaseStringUTFChars(env, jbGatewayIp, ipAddr);
+        if (route_count > 0) {
+            cmd->routes = calloc((size_t) route_count, sizeof(*cmd->routes));
+            if (!cmd->routes) {
+                return 1;
+            }
+        }
+        cmd->route_count = (size_t) route_count;
+
+        for (i = 0; i < route_count; ++i) {
+            jobject route = (*env)->GetObjectArrayElement(env, route_array, i);
+            if (!route) {
+                return 1;
+            }
+            jclass route_class = (*env)->GetObjectClass(env, route);
+            if (!route_class) {
+                (*env)->DeleteLocalRef(env, route);
+                return 1;
+            }
+
+            jstring network_string = (*env)->GetObjectField(
+                    env, route,
+                    (*env)->GetFieldID(env, route_class, "network", "Ljava/lang/String;"));
+            jstring gateway_string = (*env)->GetObjectField(
+                    env, route,
+                    (*env)->GetFieldID(env, route_class, "gatewayIp", "Ljava/lang/String;"));
+            jint prefix_length = (*env)->GetIntField(
+                    env, route,
+                    (*env)->GetFieldID(env, route_class, "prefixLength", "I"));
+            if (!network_string || !gateway_string || prefix_length < 0 || prefix_length > 32) {
+                (*env)->DeleteLocalRef(env, route_class);
+                (*env)->DeleteLocalRef(env, route);
+                return 1;
+            }
+
+            const char *network = (*env)->GetStringUTFChars(env, network_string, NULL);
+            const char *gateway = (*env)->GetStringUTFChars(env, gateway_string, NULL);
+            struct in_addr network_address;
+            struct in_addr gateway_address;
+            uint32_t host_network;
+            uint32_t host_mask = prefix_length == 0
+                                 ? 0
+                                 : UINT32_MAX << (32 - prefix_length);
+            int valid = network && gateway
+                        && inet_pton(AF_INET, network, &network_address) == 1
+                        && inet_pton(AF_INET, gateway, &gateway_address) == 1
+                        && gateway_address.s_addr != htonl(INADDR_ANY);
+            if (valid) {
+                host_network = ntohl(network_address.s_addr);
+                valid = (host_network & host_mask) == host_network;
+            }
+            if (valid) {
+                strncpy(cmd->routes[i].network, network, EDGE_CMD_IPSTR_SIZE - 1);
+                strncpy(cmd->routes[i].gateway_ip, gateway, EDGE_CMD_IPSTR_SIZE - 1);
+                cmd->routes[i].prefix_length = (uint8_t) prefix_length;
+            }
+            if (network) {
+                (*env)->ReleaseStringUTFChars(env, network_string, network);
+            }
+            if (gateway) {
+                (*env)->ReleaseStringUTFChars(env, gateway_string, gateway);
+            }
+            (*env)->DeleteLocalRef(env, network_string);
+            (*env)->DeleteLocalRef(env, gateway_string);
+            (*env)->DeleteLocalRef(env, route_class);
+            (*env)->DeleteLocalRef(env, route);
+            if (!valid) {
+                return 1;
+            }
+
 #ifndef NDEBUG
-        __android_log_print(ANDROID_LOG_DEBUG, "edge_jni", "gatewayIp = %s", cmd->gateway_ip);
+            __android_log_print(ANDROID_LOG_DEBUG, "edge_jni",
+                                "subnetRoute = %s/%u via %s",
+                                cmd->routes[i].network,
+                                (unsigned int) cmd->routes[i].prefix_length,
+                                cmd->routes[i].gateway_ip);
 #endif /* #ifndef NDEBUG */
+        }
     }
     // encryptionMode
     {
@@ -462,36 +537,6 @@ int GetEdgeCmd(JNIEnv *env, jobject jcmd, n2n_edge_cmd_t *cmd) {
 #ifndef NDEBUG
         __android_log_print(ANDROID_LOG_DEBUG, "edge_jni", "headerEnc = %d", cmd->header_encryption);
 #endif /* #ifndef NDEBUG */
-    }
-    // subnetIp
-    {
-        jstring jSubnetIp = (*env)->GetObjectField(env, jcmd, (*env)->GetFieldID(env, cls, "subnetIp",
-                                                                                 "Ljava/lang/String;"));
-        if (jSubnetIp) {
-            const char *subnetIp = (*env)->GetStringUTFChars(env, jSubnetIp, NULL);
-            if (subnetIp && strlen(subnetIp) != 0) {
-                strncpy(cmd->subnet_ip, subnetIp, EDGE_CMD_IPSTR_SIZE);
-            }
-            (*env)->ReleaseStringUTFChars(env, jSubnetIp, subnetIp);
-#ifndef NDEBUG
-            __android_log_print(ANDROID_LOG_DEBUG, "edge_jni", "subnetIp = %s", cmd->subnet_ip);
-#endif /* #ifndef NDEBUG */
-        }
-    }
-    // subnetMask
-    {
-        jstring jSubnetMask = (*env)->GetObjectField(env, jcmd, (*env)->GetFieldID(env, cls, "subnetMask",
-                                                                                 "Ljava/lang/String;"));
-        if (jSubnetMask) {
-            const char *subnetMask = (*env)->GetStringUTFChars(env, jSubnetMask, NULL);
-            if (subnetMask && strlen(subnetMask) != 0) {
-                strncpy(cmd->subnet_mask, subnetMask, EDGE_CMD_IPSTR_SIZE);
-            }
-            (*env)->ReleaseStringUTFChars(env, jSubnetMask, subnetMask);
-#ifndef NDEBUG
-            __android_log_print(ANDROID_LOG_DEBUG, "edge_jni", "subnetMask = %s", cmd->subnet_mask);
-#endif /* #ifndef NDEBUG */
-        }
     }
     // compressionMode
     {
@@ -583,6 +628,9 @@ void ResetEdgeStatus(JNIEnv *env, uint8_t cleanup) {
         }
         if (status.cmd.logpath) {
             free(status.cmd.logpath);
+        }
+        if (status.cmd.routes) {
+            free(status.cmd.routes);
         }
         InitEdgeStatus();
         pthread_mutex_unlock(&status.mutex);

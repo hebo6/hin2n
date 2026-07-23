@@ -31,6 +31,7 @@ import wang.switchy.hin2n.receiver.N2NWidgetProvider;
 import wang.switchy.hin2n.model.EdgeCmd;
 import wang.switchy.hin2n.model.EdgeStatus;
 import wang.switchy.hin2n.model.N2NSettingInfo;
+import wang.switchy.hin2n.model.SubnetRoute;
 import wang.switchy.hin2n.tool.IOUtils;
 import wang.switchy.hin2n.tool.LogFileObserver;
 import wang.switchy.hin2n.tool.ThreadUtils;
@@ -76,14 +77,16 @@ public class N2NService extends VpnService {
                 .addAddress(ip, mask)
                 .addRoute(getRoute(mN2nSettingInfo.getIp(), mask), mask);
 
-        if (!mN2nSettingInfo.getGatewayIp().isEmpty()) {
-            /* Route all the internet traffic via n2n. Most specific routes "win" over the system default gateway.
-             * See https://github.com/zerotier/ZeroTierOne/issues/178#issuecomment-204599227 */
-            if (mN2nSettingInfo.getSubnetIp().isEmpty()) {
+        for (SubnetRoute route : mN2nSettingInfo.getSubnetRoutes()) {
+            if (route.getPrefixLength() == 0) {
+                /*
+                 * Two /1 routes take precedence over the device's default route while
+                 * allowing the protected n2n socket to keep using the physical network.
+                 */
                 builder.addRoute("0.0.0.0", 1);
                 builder.addRoute("128.0.0.0", 1);
             } else {
-                builder.addRoute(mN2nSettingInfo.getSubnetIp(), getIpAddrPrefixLength(mN2nSettingInfo.getSubnetMask()));
+                builder.addRoute(route.getNetwork(), route.getPrefixLength());
             }
         }
 

@@ -272,9 +272,12 @@ public class ListActivity extends BaseActivity {
                                 n2NSettingModelCopy.getPassword(), n2NSettingModelCopy.getDevDesc(), n2NSettingModelCopy.getSuperNode(), n2NSettingModelCopy.getMoreSettings(), n2NSettingModelCopy.getSuperNodeBackup(),
                                 n2NSettingModelCopy.getMacAddr(), n2NSettingModelCopy.getMtu(), n2NSettingModelCopy.getLocalIP(), n2NSettingModelCopy.getHolePunchInterval(),
                                 n2NSettingModelCopy.getResoveSupernodeIP(), n2NSettingModelCopy.getLocalPort(), n2NSettingModelCopy.getAllowRouting(), n2NSettingModelCopy.getDropMuticast(),
-                                n2NSettingModelCopy.isUseHttpTunnel(), n2NSettingModelCopy.getTraceLevel(), false, n2NSettingModelCopy.getGatewayIp(), n2NSettingModelCopy.getSubnetIp(), n2NSettingModelCopy.getSubnetMask(), n2NSettingModelCopy.getDnsServer(),
+                                n2NSettingModelCopy.isUseHttpTunnel(), n2NSettingModelCopy.getTraceLevel(), false, n2NSettingModelCopy.getDnsServer(),
                                 n2NSettingModelCopy.getEncryptionMode(), n2NSettingModelCopy.getHeaderEnc(), n2NSettingModelCopy.getCompressionMode());
-                        n2NSettingModelDao1.insert(n2NSettingModel);
+                        Hin2nApplication.getInstance().getSettingRepository().insertSetting(
+                                n2NSettingModel,
+                                Hin2nApplication.getInstance().getSettingRepository()
+                                        .loadSubnetRoutes(n2NSettingModelCopy.getId()));
 
                         //2.ui update
                         final SettingItemEntity settingItemEntity2 = new SettingItemEntity(n2NSettingModel.getName(),
@@ -310,8 +313,8 @@ public class ListActivity extends BaseActivity {
                                 .setConfirmClickListener(new SweetAlertDialog.OnSweetClickListener() {
                                     @Override
                                     public void onClick(SweetAlertDialog sweetAlertDialog) {
-                                        N2NSettingModelDao n2NSettingModelDao = Hin2nApplication.getInstance().getDaoSession().getN2NSettingModelDao();
-                                        n2NSettingModelDao.deleteByKey(finalSettingItemEntity.getSaveId());
+                                        Hin2nApplication.getInstance().getSettingRepository()
+                                                .deleteSetting(finalSettingItemEntity.getSaveId());
 
                                         mSettingItemEntities.remove(finalSettingItemEntity);
                                         mSettingItemAdapter.notifyDataSetChanged();
@@ -395,7 +398,9 @@ public class ListActivity extends BaseActivity {
             Intent intent = new Intent(ListActivity.this, N2NService.class);
             Bundle bundle = new Bundle();
 
-            N2NSettingInfo n2NSettingInfo = new N2NSettingInfo(n2NSettingModel);
+            N2NSettingInfo n2NSettingInfo = Hin2nApplication.getInstance()
+                    .getSettingRepository()
+                    .toSettingInfo(n2NSettingModel);
             bundle.putParcelable("n2nSettingInfo", n2NSettingInfo);
             intent.putExtra("Setting", bundle);
 

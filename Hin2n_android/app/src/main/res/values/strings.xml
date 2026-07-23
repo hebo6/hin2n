@@ -38,4 +38,14 @@
     <string name="trace_level_info">INFO</string>
     <string name="trace_level_debug">DEBUG</string>
 
+    <string name="subnet_routes">Subnet routes</string>
+    <string name="add_subnet_route">Add route</string>
+    <string name="remove_subnet_route">Remove</string>
+    <string name="route_destination">Destination (CIDR)</string>
+    <string name="route_gateway">Gateway IP address</string>
+    <string name="route_destination_invalid">Use a network address in CIDR notation, for example 192.168.1.0/24</string>
+    <string name="route_gateway_invalid">Enter a valid IPv4 gateway address</string>
+    <string name="route_destination_duplicate">This destination already has a route</string>
+    <string name="route_limit_exceeded">A setting can contain at most 256 subnet routes</string>
+
 </resources>

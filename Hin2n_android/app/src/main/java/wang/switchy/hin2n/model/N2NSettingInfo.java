@@ -3,6 +3,10 @@ package wang.switchy.hin2n.model;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import wang.switchy.hin2n.storage.db.base.model.N2NSettingModel;
 
 /**
@@ -36,15 +40,13 @@ public class N2NSettingInfo implements Parcelable {
     boolean dropMuticast;
     int traceLevel;
     boolean useHttpTunnel;
-    String gatewayIp;
-    String subnetIp;
-    String subnetMask;
+    ArrayList<SubnetRoute> subnetRoutes;
     String dnsServer;
     String encryptionMode;
     boolean headerEnc;
     String compressionMode;
 
-    public N2NSettingInfo(N2NSettingModel n2NSettingModel) {
+    public N2NSettingInfo(N2NSettingModel n2NSettingModel, List<SubnetRoute> subnetRoutes) {
         this.id = n2NSettingModel.getId();
         this.name = n2NSettingModel.getName();
         this.version = n2NSettingModel.getVersion();
@@ -67,9 +69,7 @@ public class N2NSettingInfo implements Parcelable {
         this.dropMuticast = n2NSettingModel.getDropMuticast();
         this.traceLevel = n2NSettingModel.getTraceLevel();
         this.useHttpTunnel = n2NSettingModel.isUseHttpTunnel();
-        this.gatewayIp = n2NSettingModel.getGatewayIp();
-        this.subnetIp = n2NSettingModel.getSubnetIp();
-        this.subnetMask = n2NSettingModel.getSubnetMask();
+        this.subnetRoutes = new ArrayList<>(subnetRoutes);
         this.dnsServer = n2NSettingModel.getDnsServer();
         this.encryptionMode = n2NSettingModel.getEncryptionMode();
         this.headerEnc = n2NSettingModel.getHeaderEnc();
@@ -99,9 +99,7 @@ public class N2NSettingInfo implements Parcelable {
         dropMuticast = in.readByte() != 0;
         traceLevel = in.readInt();
         useHttpTunnel = in.readByte() != 0;
-        gatewayIp = in.readString();
-        subnetIp = in.readString();
-        subnetMask = in.readString();
+        subnetRoutes = in.createTypedArrayList(SubnetRoute.CREATOR);
         dnsServer = in.readString();
         encryptionMode = in.readString();
         headerEnc = in.readByte() != 0;
@@ -288,16 +286,8 @@ public class N2NSettingInfo implements Parcelable {
         this.useHttpTunnel = useHttpTunnel;
     }
 
-    public String getGatewayIp() {
-        return gatewayIp;
-    }
-
-    public String getSubnetIp() {
-        return subnetIp;
-    }
-
-    public String getSubnetMask() {
-        return subnetMask;
+    public List<SubnetRoute> getSubnetRoutes() {
+        return Collections.unmodifiableList(subnetRoutes);
     }
 
     public String getDnsServer() {
@@ -347,9 +337,7 @@ public class N2NSettingInfo implements Parcelable {
                 ", dropMuticast=" + dropMuticast +
                 ", traceLevel=" + traceLevel +
                 ", useHttpTunnel=" + useHttpTunnel +
-                ", gatewayIp=" + gatewayIp +
-                ", subnetIp=" + subnetIp +
-                ", subnetMask=" + subnetMask +
+                ", subnetRoutes=" + subnetRoutes +
                 ", dnsServer=" + dnsServer +
                 ", encryptionMode=" + encryptionMode +
                 ", headerEnc=" + headerEnc +
@@ -390,9 +378,7 @@ public class N2NSettingInfo implements Parcelable {
         parcel.writeByte((byte) (dropMuticast ? 1 : 0));
         parcel.writeInt(traceLevel);
         parcel.writeByte((byte) (useHttpTunnel ? 1 : 0));
-        parcel.writeString(gatewayIp);
-        parcel.writeString(subnetIp);
-        parcel.writeString(subnetMask);
+        parcel.writeTypedList(subnetRoutes);
         parcel.writeString(dnsServer);
         parcel.writeString(encryptionMode);
         parcel.writeByte((byte) (headerEnc ? 2 : 0));

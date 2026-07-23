@@ -4,6 +4,8 @@ import java.util.Random;
 import java.util.Vector;
 
 public class EdgeCmd {
+    public static final int MAX_SUBNET_ROUTES = 256;
+
     public int edgeType;    // Always 3 (v3) - legacy versions removed
     public int ipMode;
     public String ipAddr;
@@ -24,20 +26,18 @@ public class EdgeCmd {
     public boolean httpTunnel;
     public int traceLevel;
     public int vpnFd;
-    public String gatewayIp;
+    public SubnetRoute[] subnetRoutes;
     public String dnsServer;
     public String logPath;
     public String encryptionMode;
     public boolean headerEnc;
-    public String subnetIp;
-    public String subnetMask;
     public String compressionMode;
 
     public EdgeCmd(int edgeType, int ipMode, String ipAddr, String ipNetmask, String[] supernodes, String community,
                    String encKey, String devDesc, String encKeyFile, String macAddr, int mtu, String localIP, int holePunchInterval,
                    boolean reResoveSupernodeIP, int localPort, boolean allowRouting, boolean dropMuticast,
-                   boolean httpTunnel, int traceLevel, int vpnFd, String logPath, String gatewayIp, String dnsServer,
-                   String encryptionMode, boolean headerEnc, String subnetIp, String subnetMask, String compressionMode) {
+                   boolean httpTunnel, int traceLevel, int vpnFd, String logPath, SubnetRoute[] subnetRoutes,
+                   String dnsServer, String encryptionMode, boolean headerEnc, String compressionMode) {
         this.edgeType = edgeType;
         this.ipMode = ipMode;
         this.ipAddr = ipAddr;
@@ -59,12 +59,10 @@ public class EdgeCmd {
         this.traceLevel = traceLevel;
         this.vpnFd = vpnFd;
         this.logPath = logPath;
-        this.gatewayIp = gatewayIp;
+        this.subnetRoutes = subnetRoutes;
         this.dnsServer = dnsServer;
         this.encryptionMode = encryptionMode;
         this.headerEnc = headerEnc;
-        this.subnetIp = subnetIp;
-        this.subnetMask = subnetMask;
         this.compressionMode = compressionMode;
     }
 
@@ -92,12 +90,10 @@ public class EdgeCmd {
         this.traceLevel = n2NSettingInfo.getTraceLevel();
         this.vpnFd = vpnFd;
         this.logPath = logPath;
-        this.gatewayIp = n2NSettingInfo.getGatewayIp();
+        this.subnetRoutes = n2NSettingInfo.getSubnetRoutes().toArray(new SubnetRoute[0]);
         this.dnsServer = n2NSettingInfo.getDnsServer();
         this.encryptionMode = n2NSettingInfo.getEncryptionMode();
         this.headerEnc = n2NSettingInfo.isHeaderEnc();
-        this.subnetIp = n2NSettingInfo.getSubnetIp();
-        this.subnetMask = n2NSettingInfo.getSubnetMask();
         this.compressionMode = n2NSettingInfo.getCompressionMode();
     }
 
@@ -146,8 +142,15 @@ public class EdgeCmd {
         if (!checkInt(vpnFd, 0, 65535)) {
             invalids.add("traceLevel");
         }
-        if (!gatewayIp.isEmpty() && !checkIPV4(gatewayIp)) {
-            invalids.add("gatewayIp");
+        if (subnetRoutes == null || subnetRoutes.length > MAX_SUBNET_ROUTES) {
+            invalids.add("subnetRoutes");
+        } else {
+            for (SubnetRoute route : subnetRoutes) {
+                if (route == null) {
+                    invalids.add("subnetRoutes");
+                    break;
+                }
+            }
         }
         if (!dnsServer.isEmpty() && !checkIPV4(dnsServer)) {
             invalids.add("dnsServer");

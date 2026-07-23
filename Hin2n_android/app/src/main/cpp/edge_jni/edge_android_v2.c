@@ -42,16 +42,23 @@ static n2n_mac_t null_mac = {0, 0, 0, 0, 0, 0};
 
 /* ***************************************************** */
 
-/* Private status. Can be accessed without lock. */
 typedef struct {
+    uint32_t network;
+    uint32_t netmask;
+    uint8_t prefix_length;
     uint32_t gateway_ip;
     n2n_mac_t gateway_mac;
+    bool gateway_resolved;
+} n2n_android_route_t;
+
+/* Private status. Can be accessed without lock. */
+typedef struct {
     n2n_edge_conf_t *conf;
     uint8_t tap_mac[6];
     uint32_t tap_ipaddr;
     time_t lastArpPeriod;
-    uint32_t subnet_ip;
-    uint32_t subnet_mask;
+    n2n_android_route_t *routes;
+    size_t route_count;
 } n2n_android_t;
 
 /* ***************************************************** */
@@ -199,19 +206,44 @@ static int protect_socket(int sock) {
 
 /* *************************************************** */
 
-/** Called periodically to update the gateway MAC address. The ARP reply packet
-    is handled in handle_PACKET . */
-static void update_gateway_mac(n2n_edge_t *eee) {
+/** Sends ARP requests for every distinct route gateway. */
+static void update_gateway_macs(n2n_edge_t *eee) {
     n2n_android_t *priv = (n2n_android_t *) edge_get_userdata(eee);
+    char buffer[sizeof(arp_packet)];
 
-    if (priv->gateway_ip != 0) {
-        size_t len;
-        char buffer[48];
+    for (size_t i = 0; i < priv->route_count; ++i) {
+        bool already_requested = false;
+        for (size_t j = 0; j < i; ++j) {
+            if (priv->routes[j].gateway_ip == priv->routes[i].gateway_ip) {
+                already_requested = true;
+                break;
+            }
+        }
+        if (already_requested) {
+            continue;
+        }
 
-        len = build_unicast_arp(buffer, sizeof(buffer), priv->gateway_ip, priv);
-        traceEvent(TRACE_DEBUG, "Updating gateway mac");
-        edge_send_packet2net(eee, (uint8_t *) buffer, len);
+        int length = build_unicast_arp(buffer, sizeof(buffer),
+                                       priv->routes[i].gateway_ip, priv);
+        if (length > 0) {
+            traceEvent(TRACE_DEBUG, "Updating route gateway mac");
+            edge_send_packet2net(eee, (uint8_t *) buffer, (size_t) length);
+        }
     }
+}
+
+static n2n_android_route_t *find_route(n2n_android_t *priv, uint32_t destination_ip) {
+    uint32_t destination = ntohl(destination_ip);
+    n2n_android_route_t *best = NULL;
+
+    for (size_t i = 0; i < priv->route_count; ++i) {
+        n2n_android_route_t *candidate = &priv->routes[i];
+        if ((destination & candidate->netmask) == candidate->network
+            && (!best || candidate->prefix_length > best->prefix_length)) {
+            best = candidate;
+        }
+    }
+    return best;
 }
 
 int getIpAddrPrefixLength(char *ipaddrStr) {
@@ -293,7 +325,7 @@ static void on_sn_registration_updated(n2n_edge_t *eee, time_t now, const n2n_so
     if (change)
         g_status->report_edge_status();
 
-    update_gateway_mac(eee);
+    update_gateway_macs(eee);
 }
 
 /* *************************************************** */
@@ -302,15 +334,23 @@ static n2n_verdict on_packet_from_peer(n2n_edge_t *eee, const n2n_sock_t *peer,
                                        uint8_t *payload, uint16_t *payload_size) {
     n2n_android_t *priv = (n2n_android_t *) edge_get_userdata(eee);
 
-    if ((*payload_size >= 36) &&
-        (ntohs(*((uint16_t *) &payload[12])) == 0x0806) && /* ARP */
-        (ntohs(*((uint16_t *) &payload[20])) == 0x0002) && /* REPLY */
-        (!memcmp(&payload[28], &priv->gateway_ip, 4))) { /* From gateway */
-        memcpy(priv->gateway_mac, &payload[22], 6);
-
-        traceEvent(TRACE_INFO, "Gateway MAC: %02X:%02X:%02X:%02X:%02X:%02X",
-                   priv->gateway_mac[0], priv->gateway_mac[1], priv->gateway_mac[2],
-                   priv->gateway_mac[3], priv->gateway_mac[4], priv->gateway_mac[5]);
+    if ((*payload_size >= sizeof(arp_packet)) &&
+        (ntohs(*((uint16_t *) &payload[12])) == UIP_ETHTYPE_ARP) &&
+        (ntohs(*((uint16_t *) &payload[20])) == 0x0002)) {
+        uint32_t sender_ip;
+        memcpy(&sender_ip, &payload[28], sizeof(sender_ip));
+        for (size_t i = 0; i < priv->route_count; ++i) {
+            n2n_android_route_t *route = &priv->routes[i];
+            if (route->gateway_ip == sender_ip) {
+                memcpy(route->gateway_mac, &payload[22], sizeof(n2n_mac_t));
+                route->gateway_resolved = true;
+                traceEvent(TRACE_INFO,
+                           "Route gateway MAC: %02X:%02X:%02X:%02X:%02X:%02X",
+                           route->gateway_mac[0], route->gateway_mac[1],
+                           route->gateway_mac[2], route->gateway_mac[3],
+                           route->gateway_mac[4], route->gateway_mac[5]);
+            }
+        }
     }
 
     uip_buf = payload;
@@ -333,6 +373,25 @@ static n2n_verdict on_packet_from_tap(n2n_edge_t *eee, uint8_t *payload,
                                       uint16_t *payload_size) {
     n2n_android_t *priv = (n2n_android_t *) edge_get_userdata(eee);
 
+    if ((*payload_size >= 34) &&
+        (ntohs(*((uint16_t *) &payload[12])) == UIP_ETHTYPE_IP)) {
+        uint32_t destination_ip;
+        memcpy(&destination_ip, &payload[30], sizeof(destination_ip));
+        n2n_android_route_t *route = find_route(priv, destination_ip);
+        if (route) {
+            if (!route->gateway_resolved) {
+                traceEvent(TRACE_DEBUG,
+                           "Dropping routed packet until gateway MAC is resolved");
+                return N2N_DROP;
+            }
+            memcpy(payload, route->gateway_mac, sizeof(n2n_mac_t));
+            memcpy(&payload[6], priv->tap_mac, sizeof(priv->tap_mac));
+            uint16_t ether_type = htons(UIP_ETHTYPE_IP);
+            memcpy(&payload[12], &ether_type, sizeof(ether_type));
+            return N2N_ACCEPT;
+        }
+    }
+
     /* Fill destination mac address first or generate arp request packet instead of
      * normal packet. */
     uip_buf = payload;
@@ -341,25 +400,6 @@ static n2n_verdict on_packet_from_tap(n2n_edge_t *eee, uint8_t *payload,
     if (IPBUF->ethhdr.type == htons(UIP_ETHTYPE_ARP)) {
         *payload_size = uip_len;
         traceEvent(TRACE_DEBUG, "ARP request packets are sent instead of packets");
-    }
-
-    /* A NULL MAC as destination means that the packet is directed to the
-     * default gateway. */
-    if ((*payload_size > 6) && (!memcmp(payload, null_mac, 6))) {
-        traceEvent(TRACE_DEBUG, "Detected packet for the gateway");
-
-        /* Overwrite the destination MAC with the actual gateway mac address */
-        memcpy(payload, priv->gateway_mac, 6);
-    } else if ((*payload_size > 34) && (priv->subnet_ip != 0) && (priv->subnet_mask != 0)) {
-        /* Check if the destination IP is in the subnet that should be routed via gateway */
-        uint32_t dest_ip;
-        memcpy(&dest_ip, &payload[30], 4);
-        
-        if ((dest_ip & priv->subnet_mask) == (priv->subnet_ip & priv->subnet_mask)) {
-             traceEvent(TRACE_DEBUG, "Detected packet for the subnet route");
-             /* Overwrite the destination MAC with the actual gateway mac address */
-             memcpy(payload, priv->gateway_mac, 6);
-        }
     }
 
     return (N2N_ACCEPT);
@@ -371,6 +411,7 @@ void on_main_loop_period(n2n_edge_t *eee, time_t now) {
     /* call arp timer periodically  */
     if ((now - priv->lastArpPeriod) > ARP_PERIOD_INTERVAL) {
         uip_arp_timer();
+        update_gateway_macs(eee);
         priv->lastArpPeriod = now;
     }
 }
@@ -408,8 +449,8 @@ int start_edge_v3(n2n_edge_status_t *status) {
     char netmask[N2N_NETMASK_STR_SIZE] = "255.255.255.0";
     char device_mac[N2N_MACNAMSIZ] = "";
     char *encrypt_key = NULL;
-    struct in_addr gateway_ip = {0};
     struct in_addr tap_ip = {0};
+    n2n_android_route_t *routes = NULL;
     n2n_edge_conf_t conf;
     n2n_edge_t *eee = NULL;
     n2n_edge_callbacks_t callbacks;
@@ -506,9 +547,6 @@ int start_edge_v3(n2n_edge_status_t *status) {
     if (cmd->ip_netmask[0] != '\0')
         strncpy(netmask, cmd->ip_netmask, N2N_NETMASK_STR_SIZE);
 
-    if (cmd->gateway_ip[0] != '\0')
-        inet_aton(cmd->gateway_ip, &gateway_ip);
-
     if (cmd->mac_addr[0] != '\0')
         strncpy(device_mac, cmd->mac_addr, N2N_MACNAMSIZ);
     else {
@@ -573,14 +611,40 @@ int start_edge_v3(n2n_edge_status_t *status) {
         eee->conf.tuntap_ip_mode = TUNTAP_IP_MODE_SN_ASSIGN;
     }
 
+    if (cmd->route_count > 0) {
+        routes = calloc(cmd->route_count, sizeof(*routes));
+        if (!routes) {
+            traceEvent(TRACE_ERROR, "Unable to allocate subnet routes");
+            rv = 1;
+            goto cleanup;
+        }
+    }
+    for (size_t route_index = 0; route_index < cmd->route_count; ++route_index) {
+        struct in_addr network_address;
+        struct in_addr gateway_address;
+        uint8_t prefix_length = cmd->routes[route_index].prefix_length;
+        if (inet_pton(AF_INET, cmd->routes[route_index].network, &network_address) != 1
+            || inet_pton(AF_INET, cmd->routes[route_index].gateway_ip, &gateway_address) != 1
+            || prefix_length > 32) {
+            traceEvent(TRACE_ERROR, "Invalid subnet route");
+            rv = 1;
+            goto cleanup;
+        }
+
+        routes[route_index].netmask = prefix_length == 0
+                                      ? 0
+                                      : UINT32_MAX << (32 - prefix_length);
+        routes[route_index].network =
+                ntohl(network_address.s_addr) & routes[route_index].netmask;
+        routes[route_index].prefix_length = prefix_length;
+        routes[route_index].gateway_ip = gateway_address.s_addr;
+    }
+
     /* Private Status */
     memset(&private_status, 0, sizeof(private_status));
-    private_status.gateway_ip = gateway_ip.s_addr;
-    if (cmd->subnet_ip[0] != '\0')
-        private_status.subnet_ip = inet_addr(cmd->subnet_ip);
-    if (cmd->subnet_mask[0] != '\0')
-        private_status.subnet_mask = inet_addr(cmd->subnet_mask);
     private_status.conf = &conf;
+    private_status.routes = routes;
+    private_status.route_count = cmd->route_count;
     memcpy(private_status.tap_mac, hex_mac, 6);
     inet_aton(ip_addr, &tap_ip);
     private_status.tap_ipaddr = tap_ip.s_addr;
@@ -768,6 +832,13 @@ int start_edge_v3(n2n_edge_status_t *status) {
                     uip_ipaddr_t ipaddr;
                     struct uip_eth_addr eaddr;
 
+                    if (inet_pton(AF_INET, eee->tuntap_priv_conf.ip_addr, &tap_ip) != 1) {
+                        traceEvent(TRACE_ERROR, "Invalid assigned IP address");
+                        rv = 1;
+                        goto cleanup;
+                    }
+                    private_status.tap_ipaddr = tap_ip.s_addr;
+
                     match = sscanf(eee->tuntap_priv_conf.ip_addr, "%d.%d.%d.%d", ip, ip + 1, ip + 2, ip + 3);
                     if (match != 4) {
                         traceEvent(TRACE_ERROR, "scan ip failed, ip: %s", ip_addr);
@@ -803,6 +874,7 @@ int start_edge_v3(n2n_edge_status_t *status) {
                                      eee->tuntap_priv_conf.ip_addr,
                                      eee->tuntap_priv_conf.netmask,
                                      macaddr_str(mac_buf, eee->device.mac_addr));
+            update_gateway_macs(eee);
             runlevel = 5;
             // no more answers required
             seek_answer = 0;
@@ -889,6 +961,7 @@ int start_edge_v3(n2n_edge_status_t *status) {
 cleanup:
     if (eee) edge_term(eee);
     if (encrypt_key) free(encrypt_key);
+    if (routes) free(routes);
     tuntap_close(&dev);
     edge_term_conf(&conf);
 

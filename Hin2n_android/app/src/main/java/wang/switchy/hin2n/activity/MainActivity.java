@@ -300,7 +300,9 @@ public class MainActivity extends BaseActivity {
         if (requestCode == REQUECT_CODE_VPN && resultCode == RESULT_OK) {
             Intent intent = new Intent(MainActivity.this, N2NService.class);
             Bundle bundle = new Bundle();
-            N2NSettingInfo n2NSettingInfo = new N2NSettingInfo(mCurrentSettingInfo);
+            N2NSettingInfo n2NSettingInfo = Hin2nApplication.getInstance()
+                    .getSettingRepository()
+                    .toSettingInfo(mCurrentSettingInfo);
             bundle.putParcelable("n2nSettingInfo", n2NSettingInfo);
             intent.putExtra("Setting", bundle);
 

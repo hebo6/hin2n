@@ -25,6 +25,9 @@ import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import cn.pedant.SweetAlert.SweetAlertDialog;
 import wang.switchy.hin2n.Hin2nApplication;
@@ -35,6 +38,7 @@ import wang.switchy.hin2n.event.StopEvent;
 import wang.switchy.hin2n.model.EdgeCmd;
 import wang.switchy.hin2n.model.EdgeStatus;
 import wang.switchy.hin2n.model.N2NSettingInfo;
+import wang.switchy.hin2n.model.SubnetRoute;
 import wang.switchy.hin2n.service.N2NService;
 import wang.switchy.hin2n.storage.db.base.N2NSettingModelDao;
 import wang.switchy.hin2n.storage.db.base.model.N2NSettingModel;
@@ -91,9 +95,10 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
     private ArrayList<String> mTraceLevelList;
     private CheckBox mLocalIpCheckBox;
     // Version selector removed - only v3 is supported
-    private TextInputLayout mGatewayIp;
-    private TextInputLayout mSubnetIp;
-    private TextInputLayout mSubnetMask;
+    private LinearLayout mSubnetRoutesLayout;
+    private LinearLayout mSubnetRouteItems;
+    private Button mAddSubnetRouteButton;
+    private List<SubnetRoute> mValidatedSubnetRoutes = new ArrayList<>();
     private TextInputLayout mDnsServer;
     private LinearLayout mEncryptionBox;
     private Spinner mEncryptionMode;
@@ -195,9 +200,10 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
         mAllowRoutinCheckBox = (CheckBox) findViewById(R.id.allow_routing_check_box);
         mAcceptMuticastView = (RelativeLayout) findViewById(R.id.rl_drop_muticast);
         mAcceptMuticastCheckBox = (CheckBox) findViewById(R.id.accept_muticast_check_box);
-        mGatewayIp = (TextInputLayout) findViewById(R.id.til_gateway_ip);
-        mSubnetIp = (TextInputLayout) findViewById(R.id.til_subnet_ip);
-        mSubnetMask = (TextInputLayout) findViewById(R.id.til_subnet_mask);
+        mSubnetRoutesLayout = (LinearLayout) findViewById(R.id.ll_subnet_routes);
+        mSubnetRouteItems = (LinearLayout) findViewById(R.id.ll_subnet_route_items);
+        mAddSubnetRouteButton = (Button) findViewById(R.id.btn_add_subnet_route);
+        mAddSubnetRouteButton.setOnClickListener(view -> addSubnetRouteRow(null));
         mDnsServer = (TextInputLayout) findViewById(R.id.til_dns_server_ip);
         mEncryptionBox = (LinearLayout) findViewById(R.id.ll_n2n_encryption);
         mEncryptionMode = (Spinner) findViewById(R.id.til_encryption_mode);
@@ -271,7 +277,6 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
             mAcceptMuticastCheckBox.setChecked(!Boolean.valueOf(getString(R.string.item_default_dropmuticast)));
             mTraceLevelSpinner.setSelection(Integer.valueOf(getString(R.string.item_default_tracelevel)) - 1);
             mMoreSettingCheckBox.setChecked(false);
-            mGatewayIp.getEditText().setText(R.string.item_default_gateway_ip);
             mDnsServer.getEditText().setText("");
             mEncryptionMode.setSelection(encAdapter.getPosition("AES-CBC")); // v3 default
             mCompressionMode.setSelection(compAdapter.getPosition("None"));
@@ -295,9 +300,10 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
             mEncryptTIL.getEditText().setText(mN2NSettingModel.getPassword());
             mDevDescTIL.getEditText().setText(mN2NSettingModel.getDevDesc());
             mSuperNodeTIL.getEditText().setText(mN2NSettingModel.getSuperNode());
-            mGatewayIp.getEditText().setText(mN2NSettingModel.getGatewayIp());
-            mSubnetIp.getEditText().setText(mN2NSettingModel.getSubnetIp());
-            mSubnetMask.getEditText().setText(mN2NSettingModel.getSubnetMask());
+            for (SubnetRoute route : Hin2nApplication.getInstance().getSettingRepository()
+                    .loadSubnetRoutes(mSaveId)) {
+                addSubnetRouteRow(route);
+            }
             mDnsServer.getEditText().setText(mN2NSettingModel.getDnsServer());
             mEncryptionMode.setSelection(encAdapter.getPosition(mN2NSettingModel.getEncryptionMode()));
             String compressionMode = mN2NSettingModel.getCompressionMode();
@@ -322,7 +328,7 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
             mHeaderEncCheckBox.setChecked(mN2NSettingModel.getHeaderEnc());
             mAcceptMuticastCheckBox.setChecked(!mN2NSettingModel.getDropMuticast());
             mTraceLevelSpinner.setSelection(Integer.valueOf(mN2NSettingModel.getTraceLevel()));
-            mMoreSettingCheckBox.setChecked(false);
+            mMoreSettingCheckBox.setChecked(mN2NSettingModel.getMoreSettings());
 
             mButtons.setVisibility(View.VISIBLE);
             mSaveBtn.setVisibility(View.GONE);
@@ -344,7 +350,9 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
         if (requestCode == REQUECT_CODE_VPN && resultCode == RESULT_OK) {
             Intent intent = new Intent(SettingDetailsActivity.this, N2NService.class);
             Bundle bundle = new Bundle();
-            N2NSettingInfo n2NSettingInfo = new N2NSettingInfo(mN2NSettingModel);
+            N2NSettingInfo n2NSettingInfo = Hin2nApplication.getInstance()
+                    .getSettingRepository()
+                    .toSettingInfo(mN2NSettingModel);
             bundle.putParcelable("n2nSettingInfo", n2NSettingInfo);
             intent.putExtra("Setting", bundle);
 
@@ -368,9 +376,7 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
         mHolePunchInterval.setVisibility(View.GONE);
         mLocalIP.setVisibility(View.GONE);
         mLocalIpCheckBox.setVisibility(View.GONE);
-        mGatewayIp.setVisibility(View.VISIBLE);
-        mSubnetIp.setVisibility(View.VISIBLE);
-        mSubnetMask.setVisibility(View.VISIBLE);
+        mSubnetRoutesLayout.setVisibility(View.VISIBLE);
         mDnsServer.setVisibility(View.VISIBLE);
         mResolveSnLayout.setVisibility(View.GONE);
         mEncryptionBox.setVisibility(View.VISIBLE);
@@ -411,7 +417,8 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
             }
 
             mN2NSettingModel = createN2NSettingModel(null, settingName, !hasSelected);
-            n2NSettingModelDao.insert(mN2NSettingModel);
+            Hin2nApplication.getInstance().getSettingRepository()
+                    .insertSetting(mN2NSettingModel, mValidatedSubnetRoutes);
 
             if (!hasSelected) {
                 mN2NSettingModel = n2NSettingModelDao.queryBuilder().where(N2NSettingModelDao.Properties.IsSelcected.eq(true)).unique();
@@ -449,7 +456,8 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
             }
 
             mN2NSettingModel = createN2NSettingModel(mSaveId, settingName1, mN2NSettingModel.getIsSelcected());
-            n2NSettingModelDao1.update(mN2NSettingModel);
+            Hin2nApplication.getInstance().getSettingRepository()
+                    .updateSetting(mN2NSettingModel, mValidatedSubnetRoutes);
 
             if (N2NService.INSTANCE != null &&
                     N2NService.INSTANCE.getCurrentStatus() != EdgeStatus.RunningStatus.DISCONNECT &&
@@ -509,6 +517,68 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
                         }).show();
             }
         }
+    }
+
+    private void addSubnetRouteRow(SubnetRoute route) {
+        if (mSubnetRouteItems.getChildCount() >= EdgeCmd.MAX_SUBNET_ROUTES) {
+            mAddSubnetRouteButton.setError(getString(R.string.route_limit_exceeded));
+            return;
+        }
+
+        View row = getLayoutInflater().inflate(R.layout.item_subnet_route, mSubnetRouteItems, false);
+        TextInputLayout destinationInput = row.findViewById(R.id.til_route_destination);
+        TextInputLayout gatewayInput = row.findViewById(R.id.til_route_gateway);
+        if (route != null) {
+            destinationInput.getEditText().setText(route.getCidr());
+            gatewayInput.getEditText().setText(route.getGatewayIp());
+        }
+        row.findViewById(R.id.btn_remove_subnet_route)
+                .setOnClickListener(view -> mSubnetRouteItems.removeView(row));
+        mSubnetRouteItems.addView(row);
+        mAddSubnetRouteButton.setError(null);
+    }
+
+    private List<SubnetRoute> validateSubnetRoutes() {
+        if (mSubnetRouteItems.getChildCount() > EdgeCmd.MAX_SUBNET_ROUTES) {
+            mAddSubnetRouteButton.setError(getString(R.string.route_limit_exceeded));
+            return null;
+        }
+
+        List<SubnetRoute> routes = new ArrayList<>(mSubnetRouteItems.getChildCount());
+        Set<String> destinations = new HashSet<>();
+        for (int index = 0; index < mSubnetRouteItems.getChildCount(); index++) {
+            View row = mSubnetRouteItems.getChildAt(index);
+            TextInputLayout destinationInput = row.findViewById(R.id.til_route_destination);
+            TextInputLayout gatewayInput = row.findViewById(R.id.til_route_gateway);
+            String destination = destinationInput.getEditText().getText().toString().trim();
+            String gateway = gatewayInput.getEditText().getText().toString().trim();
+
+            destinationInput.setErrorEnabled(false);
+            gatewayInput.setErrorEnabled(false);
+
+            if (!EdgeCmd.checkIPV4(gateway)) {
+                gatewayInput.setError(getString(R.string.route_gateway_invalid));
+                gatewayInput.getEditText().requestFocus();
+                return null;
+            }
+
+            final SubnetRoute route;
+            try {
+                route = SubnetRoute.fromCidr(destination, gateway);
+            } catch (IllegalArgumentException exception) {
+                destinationInput.setError(getString(R.string.route_destination_invalid));
+                destinationInput.getEditText().requestFocus();
+                return null;
+            }
+
+            if (!destinations.add(route.getCidr())) {
+                destinationInput.setError(getString(R.string.route_destination_duplicate));
+                destinationInput.getEditText().requestFocus();
+                return null;
+            }
+            routes.add(route);
+        }
+        return routes;
     }
 
     private boolean checkValues() {
@@ -604,31 +674,11 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
         } else {
             mNetMaskTIL.setErrorEnabled(false);
         }
-        if((!mGatewayIp.getEditText().getText().toString().isEmpty()) &&
-            (!EdgeCmd.checkIPV4(mGatewayIp.getEditText().getText().toString()))) {
-          mGatewayIp.setError(mGatewayIp.getHint() + " format is incorrect");
-          mGatewayIp.getEditText().requestFocus();
-          return false;
-        } else {
-          mGatewayIp.setErrorEnabled(false);
+        List<SubnetRoute> subnetRoutes = validateSubnetRoutes();
+        if (subnetRoutes == null) {
+            return false;
         }
-        if((!mSubnetIp.getEditText().getText().toString().isEmpty()) &&
-            (!EdgeCmd.checkIPV4(mSubnetIp.getEditText().getText().toString()))) {
-          mSubnetIp.setError(mSubnetIp.getHint() + " format is incorrect");
-          mSubnetIp.getEditText().requestFocus();
-          return false;
-        } else {
-          mSubnetIp.setErrorEnabled(false);
-        }
-        // subnet mask
-        if (!mSubnetIp.getEditText().getText().toString().isEmpty() &&
-        !EdgeCmd.checkIPV4Mask(mSubnetMask.getEditText().getText().toString())) {
-            mSubnetMask.setError(mSubnetMask.getHint() + " format is incorrect");
-            mSubnetMask.getEditText().requestFocus();
-          return false;
-        } else {
-            mSubnetMask.setErrorEnabled(false);
-        }
+        mValidatedSubnetRoutes = subnetRoutes;
 
         if((!mDnsServer.getEditText().getText().toString().isEmpty()) &&
                 (!EdgeCmd.checkIPV4(mDnsServer.getEditText().getText().toString()))) {
@@ -759,9 +809,6 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
                 Integer.valueOf(mLocalPort.getEditText().getText().toString()), mAllowRoutinCheckBox.isChecked(),
                 !mAcceptMuticastCheckBox.isChecked(), false,
                 mTraceLevelSpinner.getSelectedItemPosition(), isSelected,
-                mGatewayIp.getEditText().getText().toString(),
-                mSubnetIp.getEditText().getText().toString(),
-                mSubnetMask.getEditText().getText().toString(),
                 mDnsServer.getEditText().getText().toString(),
                 mEncryptionMode.getSelectedItem().toString(),
                 mHeaderEncCheckBox.isChecked(),

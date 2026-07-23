@@ -47,13 +47,10 @@ public class N2NSettingModelDao extends AbstractDao<N2NSettingModel, Long> {
         public final static Property UseHttpTunnel = new Property(20, boolean.class, "useHttpTunnel", false, "USE_HTTP_TUNNEL");
         public final static Property TraceLevel = new Property(21, int.class, "traceLevel", false, "TRACE_LEVEL");
         public final static Property IsSelcected = new Property(22, boolean.class, "isSelcected", false, "IS_SELCECTED");
-        public final static Property GatewayIp = new Property(23, String.class, "gatewayIp", false, "GATEWAY_IP");
-        public final static Property SubnetIp = new Property(24, String.class, "subnetIp", false, "SUBNET_IP");
-        public final static Property SubnetMask = new Property(25, String.class, "subnetMask", false, "SUBNET_MASK");
-        public final static Property DnsServer = new Property(26, String.class, "dnsServer", false, "DNS_SERVER");
-        public final static Property EncryptionMode = new Property(27, String.class, "encryptionMode", false, "ENCRYPTION_MODE");
-        public final static Property HeaderEnc = new Property(28, boolean.class, "headerEnc", false, "HEADER_ENC");
-        public final static Property CompressionMode = new Property(29, String.class, "compressionMode", false, "COMPRESSION_MODE");
+        public final static Property DnsServer = new Property(23, String.class, "dnsServer", false, "DNS_SERVER");
+        public final static Property EncryptionMode = new Property(24, String.class, "encryptionMode", false, "ENCRYPTION_MODE");
+        public final static Property HeaderEnc = new Property(25, boolean.class, "headerEnc", false, "HEADER_ENC");
+        public final static Property CompressionMode = new Property(26, String.class, "compressionMode", false, "COMPRESSION_MODE");
     }
 
 
@@ -92,13 +89,10 @@ public class N2NSettingModelDao extends AbstractDao<N2NSettingModel, Long> {
                 "\"USE_HTTP_TUNNEL\" INTEGER NOT NULL ," + // 20: useHttpTunnel
                 "\"TRACE_LEVEL\" INTEGER NOT NULL ," + // 21: traceLevel
                 "\"IS_SELCECTED\" INTEGER NOT NULL ," + // 22: isSelcected
-                "\"GATEWAY_IP\" TEXT," + // 23: gatewayIp
-                "\"SUBNET_IP\" TEXT," + // 24: subnetIp
-                "\"SUBNET_MASK\" TEXT," + // 25: subnetMask
-                "\"DNS_SERVER\" TEXT," + // 26: dnsServer
-                "\"ENCRYPTION_MODE\" TEXT," + // 27: encryptionMode
-                "\"HEADER_ENC\" INTEGER NOT NULL ," + // 28: headerEnc
-                "\"COMPRESSION_MODE\" TEXT);"); // 29: compressionMode
+                "\"DNS_SERVER\" TEXT," + // 23: dnsServer
+                "\"ENCRYPTION_MODE\" TEXT," + // 24: encryptionMode
+                "\"HEADER_ENC\" INTEGER NOT NULL ," + // 25: headerEnc
+                "\"COMPRESSION_MODE\" TEXT);"); // 26: compressionMode
     }
 
     /** Drops the underlying database table. */
@@ -178,35 +172,20 @@ public class N2NSettingModelDao extends AbstractDao<N2NSettingModel, Long> {
         stmt.bindLong(22, entity.getTraceLevel());
         stmt.bindLong(23, entity.getIsSelcected() ? 1L: 0L);
  
-        String gatewayIp = entity.getGatewayIp();
-        if (gatewayIp != null) {
-            stmt.bindString(24, gatewayIp);
-        }
- 
-        String subnetIp = entity.getSubnetIp();
-        if (subnetIp != null) {
-            stmt.bindString(25, subnetIp);
-        }
- 
-        String subnetMask = entity.getSubnetMask();
-        if (subnetMask != null) {
-            stmt.bindString(26, subnetMask);
-        }
- 
         String dnsServer = entity.getDnsServer();
         if (dnsServer != null) {
-            stmt.bindString(27, dnsServer);
+            stmt.bindString(24, dnsServer);
         }
  
         String encryptionMode = entity.getEncryptionMode();
         if (encryptionMode != null) {
-            stmt.bindString(28, encryptionMode);
+            stmt.bindString(25, encryptionMode);
         }
-        stmt.bindLong(29, entity.getHeaderEnc() ? 1L: 0L);
+        stmt.bindLong(26, entity.getHeaderEnc() ? 1L: 0L);
  
         String compressionMode = entity.getCompressionMode();
         if (compressionMode != null) {
-            stmt.bindString(30, compressionMode);
+            stmt.bindString(27, compressionMode);
         }
     }
 
@@ -281,35 +260,20 @@ public class N2NSettingModelDao extends AbstractDao<N2NSettingModel, Long> {
         stmt.bindLong(22, entity.getTraceLevel());
         stmt.bindLong(23, entity.getIsSelcected() ? 1L: 0L);
  
-        String gatewayIp = entity.getGatewayIp();
-        if (gatewayIp != null) {
-            stmt.bindString(24, gatewayIp);
-        }
- 
-        String subnetIp = entity.getSubnetIp();
-        if (subnetIp != null) {
-            stmt.bindString(25, subnetIp);
-        }
- 
-        String subnetMask = entity.getSubnetMask();
-        if (subnetMask != null) {
-            stmt.bindString(26, subnetMask);
-        }
- 
         String dnsServer = entity.getDnsServer();
         if (dnsServer != null) {
-            stmt.bindString(27, dnsServer);
+            stmt.bindString(24, dnsServer);
         }
  
         String encryptionMode = entity.getEncryptionMode();
         if (encryptionMode != null) {
-            stmt.bindString(28, encryptionMode);
+            stmt.bindString(25, encryptionMode);
         }
-        stmt.bindLong(29, entity.getHeaderEnc() ? 1L: 0L);
+        stmt.bindLong(26, entity.getHeaderEnc() ? 1L: 0L);
  
         String compressionMode = entity.getCompressionMode();
         if (compressionMode != null) {
-            stmt.bindString(30, compressionMode);
+            stmt.bindString(27, compressionMode);
         }
     }
 
@@ -344,13 +308,10 @@ public class N2NSettingModelDao extends AbstractDao<N2NSettingModel, Long> {
             cursor.getShort(offset + 20) != 0, // useHttpTunnel
             cursor.getInt(offset + 21), // traceLevel
             cursor.getShort(offset + 22) != 0, // isSelcected
-            cursor.isNull(offset + 23) ? null : cursor.getString(offset + 23), // gatewayIp
-            cursor.isNull(offset + 24) ? null : cursor.getString(offset + 24), // subnetIp
-            cursor.isNull(offset + 25) ? null : cursor.getString(offset + 25), // subnetMask
-            cursor.isNull(offset + 26) ? null : cursor.getString(offset + 26), // dnsServer
-            cursor.isNull(offset + 27) ? null : cursor.getString(offset + 27), // encryptionMode
-            cursor.getShort(offset + 28) != 0, // headerEnc
-            cursor.isNull(offset + 29) ? null : cursor.getString(offset + 29) // compressionMode
+            cursor.isNull(offset + 23) ? null : cursor.getString(offset + 23), // dnsServer
+            cursor.isNull(offset + 24) ? null : cursor.getString(offset + 24), // encryptionMode
+            cursor.getShort(offset + 25) != 0, // headerEnc
+            cursor.isNull(offset + 26) ? null : cursor.getString(offset + 26) // compressionMode
         );
         return entity;
     }
@@ -380,13 +341,10 @@ public class N2NSettingModelDao extends AbstractDao<N2NSettingModel, Long> {
         entity.setUseHttpTunnel(cursor.getShort(offset + 20) != 0);
         entity.setTraceLevel(cursor.getInt(offset + 21));
         entity.setIsSelcected(cursor.getShort(offset + 22) != 0);
-        entity.setGatewayIp(cursor.isNull(offset + 23) ? null : cursor.getString(offset + 23));
-        entity.setSubnetIp(cursor.isNull(offset + 24) ? null : cursor.getString(offset + 24));
-        entity.setSubnetMask(cursor.isNull(offset + 25) ? null : cursor.getString(offset + 25));
-        entity.setDnsServer(cursor.isNull(offset + 26) ? null : cursor.getString(offset + 26));
-        entity.setEncryptionMode(cursor.isNull(offset + 27) ? null : cursor.getString(offset + 27));
-        entity.setHeaderEnc(cursor.getShort(offset + 28) != 0);
-        entity.setCompressionMode(cursor.isNull(offset + 29) ? null : cursor.getString(offset + 29));
+        entity.setDnsServer(cursor.isNull(offset + 23) ? null : cursor.getString(offset + 23));
+        entity.setEncryptionMode(cursor.isNull(offset + 24) ? null : cursor.getString(offset + 24));
+        entity.setHeaderEnc(cursor.getShort(offset + 25) != 0);
+        entity.setCompressionMode(cursor.isNull(offset + 26) ? null : cursor.getString(offset + 26));
      }
     
     @Override

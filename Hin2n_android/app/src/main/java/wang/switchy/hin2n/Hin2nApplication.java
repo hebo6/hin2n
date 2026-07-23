@@ -10,6 +10,7 @@ import android.os.Build;
 
 import wang.switchy.hin2n.storage.db.base.DaoMaster;
 import wang.switchy.hin2n.storage.db.base.DaoSession;
+import wang.switchy.hin2n.storage.SettingRepository;
 import wang.switchy.hin2n.tool.N2nTools;
 
 import com.tencent.bugly.Bugly;
@@ -30,6 +31,7 @@ public class Hin2nApplication extends android.app.Application {
     private SQLiteDatabase db;
     private DaoMaster mDaoMaster;
     private DaoSession mDaoSession;
+    private SettingRepository mSettingRepository;
 
     static {
         System.loadLibrary("slog");
@@ -75,8 +77,10 @@ public class Hin2nApplication extends android.app.Application {
     private void setDatabase() {
         mHelper = new DaoMaster.DevOpenHelper(this, "N2N-db", null);
         db = mHelper.getWritableDatabase();
+        db.setForeignKeyConstraintsEnabled(true);
         mDaoMaster = new DaoMaster(db);
         mDaoSession = mDaoMaster.newSession();
+        mSettingRepository = new SettingRepository(mDaoSession);
     }
 
     public DaoSession getDaoSession() {
@@ -85,6 +89,10 @@ public class Hin2nApplication extends android.app.Application {
 
     public SQLiteDatabase getDb() {
         return db;
+    }
+
+    public SettingRepository getSettingRepository() {
+        return mSettingRepository;
     }
 
     @TargetApi(Build.VERSION_CODES.O)

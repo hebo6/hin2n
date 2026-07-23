@@ -42,7 +42,9 @@ public class BootCompletedReceiver extends BroadcastReceiver {
                 // 启动服务
                 Intent i = new Intent(context, N2NService.class);
                 Bundle bundle = new Bundle();
-                N2NSettingInfo n2NSettingInfo = new N2NSettingInfo(mCurrentSettingInfo);
+                N2NSettingInfo n2NSettingInfo = Hin2nApplication.getInstance()
+                        .getSettingRepository()
+                        .toSettingInfo(mCurrentSettingInfo);
                 bundle.putParcelable("n2nSettingInfo", n2NSettingInfo);
                 i.putExtra("Setting", bundle);
 

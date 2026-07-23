@@ -299,55 +299,41 @@
 
                 </com.google.android.material.textfield.TextInputLayout>
 
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/til_gateway_ip"
-                    android:layout_marginTop="5dp"
+                <LinearLayout
+                    android:id="@+id/ll_subnet_routes"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_below="@id/til_local_port"
-                    android:hint="Gateway IP address">
+                    android:layout_marginTop="8dp"
+                    android:orientation="vertical">
 
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/tie_gateway_ip"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/subnet_routes"
+                        android:textStyle="bold" />
 
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/til_subnet_ip"
+                    <LinearLayout
+                        android:id="@+id/ll_subnet_route_items"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="5dp"
-                        android:hint="Subnet IP address">
+                        android:orientation="vertical" />
 
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/tie_subnet_ip"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content" />
-
-                    </com.google.android.material.textfield.TextInputLayout>
-
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/til_subnet_mask"
-                        android:layout_width="match_parent"
+                    <Button
+                        android:id="@+id/btn_add_subnet_route"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="5dp"
-                        android:hint="Subnet mask address">
+                        android:layout_gravity="end"
+                        android:text="@string/add_subnet_route" />
 
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/tie_subnet_mask"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content" />
-
-                    </com.google.android.material.textfield.TextInputLayout>
-
-                </com.google.android.material.textfield.TextInputLayout>
+                </LinearLayout>
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/til_dns_server_ip"
                     android:layout_marginTop="5dp"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_below="@id/til_gateway_ip"
+                    android:layout_below="@id/ll_subnet_routes"
                     android:hint="DNS server IP address">
 
                     <com.google.android.material.textfield.TextInputEditText
